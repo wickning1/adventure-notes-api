@@ -16,8 +16,7 @@
     "graphql": "^14.6.0",
     "reflect-metadata": "^0.1.13",
     "source-map-support": "0.5.16",
-    "type-graphql": "^0.17.6",
-    "typedi": "^0.8.0"
+    "type-graphql": "^0.17.6"
   },
   "devDependencies": {
     "@types/source-map-support": "^0.4.0",

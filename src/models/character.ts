@@ -29,7 +29,7 @@ export class CharacterResolver extends withKnownByResolver(Character, Object) {
   @Query(returns => [Character])
   async characters (
     @Arg('adventure', type => ID) adventure: MongoID,
-    @Arg('mayLoginAs', { nullable: true }) mayLoginAs: boolean
+    @Arg('mayLoginAs', { nullable: true, description: 'When true, query only returns characters for which the user is permitted to use the "Point of View" feature.' }) mayLoginAs: boolean
   ) {
     return []
   }

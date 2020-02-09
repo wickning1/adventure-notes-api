@@ -1,19 +1,24 @@
 import 'reflect-metadata'
 import { install } from 'source-map-support'
 import { ApolloServer } from 'apollo-server'
-import { Container } from 'typedi'
 import { buildSchema } from 'type-graphql'
-import { CharacterResolver } from './models'
+import { DataLoaderFactory } from 'dataloader-factory'
+import { CharacterResolver, UserResolver, AdventureResolver } from './models'
+import { Context } from './lib'
 
 install()
 
 async function main () {
   const schema = await buildSchema({
-    resolvers: [CharacterResolver],
-    container: Container
+    resolvers: [AdventureResolver, CharacterResolver, UserResolver]
   })
 
-  const server = new ApolloServer({ schema })
+  const server = new ApolloServer({
+    schema,
+    context: req => {
+      return new Context('', new DataLoaderFactory())
+    }
+  })
 
   // Start the server
   const { url } = await server.listen(80)

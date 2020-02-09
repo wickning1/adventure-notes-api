@@ -7,6 +7,9 @@ import { Character } from './character'
 @InputType('UserDetailsInput', { isAbstract: true })
 export class UserDetails {
   @Field()
+  name!: string
+
+  @Field()
   email!: string
 }
 
@@ -16,7 +19,7 @@ export class User extends withId(UserDetails) {
   characters!: Ref<Character[]>
 }
 
-@InputType('CreateUserInput')
+@InputType('UserInput')
 export class CreateUserInput extends UserDetails {
   @Field()
   password!: string
@@ -25,8 +28,8 @@ export class CreateUserInput extends UserDetails {
 @Resolver(of => User)
 export class UserResolver {
   @Query(returns => User)
-  async self () {
-    return new User()
+  async self (@Ctx() ctx: Context) {
+    return ctx.userService.get(ctx.user)
   }
 
   @FieldResolver(returns => [Character])
