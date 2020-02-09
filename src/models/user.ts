@@ -57,6 +57,7 @@ export class UserResolver {
   @Mutation(returns => JWT)
   async login (@Arg('email') email: string, @Arg('password') password: string, @Ctx() ctx: Context) {
     const user = await ctx.userService.checkLogin(email, password)
+    if (!user) throw new Error('Authentication failed.')
     const token = ctx.getToken({ user: user.id })
     return { token }
   }

@@ -5,11 +5,12 @@ export function toArray<ItemType> (items: ItemType | ItemType[]) {
 }
 
 export function toClass<ItemType> (items: any[], ObjectClass: { new(): ItemType }): ItemType[]
-export function toClass<ItemType> (items: any, ObjectClass: { new(): ItemType }): ItemType
+export function toClass<ItemType> (items: any, ObjectClass: { new(): ItemType }): ItemType | undefined
 export function toClass<ItemType> (items: any, ObjectClass: { new(): ItemType }): any {
   if (Array.isArray(items)) {
     return items.map(item => toClass(item, ObjectClass))
   } else {
+    if (!items) return undefined
     const ret = new ObjectClass()
     Object.assign(ret, items)
     return ret

@@ -12,7 +12,7 @@ DataLoaderFactory.register('users', {
 
 export class UserService extends BaseService {
   cleanse (users: any[]): User[]
-  cleanse (users: any): User
+  cleanse (users: any): User | undefined
   cleanse (users: any) {
     const ret = toArray(users).map(userData => {
       return { ...userData, email: userData._id.toString() === this.ctx.user ? userData.email : '' }
@@ -22,7 +22,7 @@ export class UserService extends BaseService {
   }
 
   async get (id: MongoID) {
-    return this.cleanse(await this.ctx.dataLoaderFactory.get<MongoID, User>('users').load(id))
+    return this.cleanse(await this.ctx.dataLoaderFactory.get('users').load(id))
   }
 
   async getMany () {
@@ -33,7 +33,7 @@ export class UserService extends BaseService {
   async create (userData: UserInput) {
     if (!userData.password?.length) throw new Error('Password is required.')
     const { hash, salt } = saltAndHash(userData.password)
-    const user = { ...userData, password: hash, salt }
+    const user = { ...userData, password: hash, salt, _version: 0 }
     const insertId = (await db.collection('users').insertOne(user)).insertedId
     return this.cleanse({ ...user, _id: insertId })
   }
@@ -41,7 +41,6 @@ export class UserService extends BaseService {
   async checkLogin (email: string, password: string) {
     const userData = await db.collection('users').findOne({ email })
     if (userData?.password && userData?.salt && checkSaltedHash(password, userData.password, userData.salt)) return this.cleanse(userData)
-    throw new Error('Authentication failed.')
   }
 }
 

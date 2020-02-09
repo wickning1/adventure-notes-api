@@ -41,7 +41,7 @@ export class CharacterResolver extends withKnownByResolver(Character, Object) {
   }
 
   /** Foreign References **/
-  @FieldResolver(returns => User)
+  @FieldResolver(returns => User, { nullable: true })
   async player (@Root() character: Character, @Ctx() ctx: Context) {
     return new User()
   }

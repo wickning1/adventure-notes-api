@@ -9,7 +9,7 @@ export function withId<T extends ClassType> (NextMixinClass: T) {
     get id (): MongoID { return this._id.toString() }
 
     @Field(type => Int)
-    documentVersion!: number
+    _version!: number
   }
   return IDTrait
 }
