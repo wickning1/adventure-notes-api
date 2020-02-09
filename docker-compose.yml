@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+    environment:
+      JWT_SECRET: supersecret
     ports:
       - 127.0.0.1:${ADVENTURE_NOTES_API_DEBUG:-9229}:9229
       - 4000:80

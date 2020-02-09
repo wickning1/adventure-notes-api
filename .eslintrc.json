@@ -33,7 +33,9 @@
           {
             "args": "none"
           }
-        ]
+        ],
+        // this rule is redundant when using typescript and improperly throws on method overloads
+        "no-dupe-class-members": "off"
       }
     }
   ]

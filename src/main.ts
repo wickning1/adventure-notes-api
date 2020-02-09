@@ -16,8 +16,8 @@ async function main () {
 
   const server = new ApolloServer({
     schema,
-    context: req => {
-      return new Context('', new DataLoaderFactory())
+    context: ({ req }) => {
+      return new Context(req.headers.authorization, new DataLoaderFactory())
     }
   })
 

@@ -1,8 +1,8 @@
-import { DataLoaderFactory } from 'dataloader-factory'
+import { Context } from '../lib'
 
 export class BaseService {
-  protected dataLoaderFactory: DataLoaderFactory
-  constructor (dataLoaderFactory: DataLoaderFactory) {
-    this.dataLoaderFactory = dataLoaderFactory
+  protected ctx: Context
+  constructor (ctx: Context) {
+    this.ctx = ctx
   }
 }
