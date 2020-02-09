@@ -5,3 +5,9 @@ services:
       context: .
     ports:
       - 4000:80
+  adventure-notes-db:
+    image: mongo:latest
+    volumes:
+      - adventure-notes-db:/data/db
+volumes:
+  adventure-notes-db: {}

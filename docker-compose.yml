@@ -10,3 +10,9 @@ services:
     volumes:
       - ./src:/usr/app/src
       - ./dist:/usr/app/dist
+  adventure-notes-db:
+    image: mongo:latest
+    volumes:
+      - adventure-notes-db:/data/db
+volumes:
+  adventure-notes-db: {}

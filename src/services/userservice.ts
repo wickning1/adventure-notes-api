@@ -1,9 +1,9 @@
 import { MongoID } from '../lib'
-import { User } from '../models'
 import { BaseService } from '.'
+import { db } from '../lib/db'
 
 export class UserService extends BaseService {
   async get (id: MongoID) {
-    return new User()
+    return db.collection('users').findOne({ id })
   }
 }
