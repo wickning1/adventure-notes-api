@@ -1,18 +1,20 @@
 import { ObjectType, registerEnumType, Field } from 'type-graphql'
 
 export enum GoodType {
-  GOOD = 1,
-  NEUTRAL = 0,
-  EVIL = -1
+  GOOD = 'Good',
+  NEUTRAL = 'Neutral',
+  EVIL = 'Evil',
+  UNKNOWN = 'Unknown'
 }
 registerEnumType(GoodType, {
   name: 'GoodType',
   description: 'Whether this object tends toward good or evil or is neutral.'
 })
 export enum LawfulType {
-  LAWFUL = 1,
-  NEUTRAL = 0,
-  CHAOTIC = -1
+  LAWFUL = 'Lawful',
+  NEUTRAL = 'Neutral',
+  CHAOTIC = 'Chaotic',
+  UNKNOWN = 'Unknown'
 }
 registerEnumType(LawfulType, {
   name: 'LawfulType',
@@ -21,9 +23,15 @@ registerEnumType(LawfulType, {
 
 @ObjectType()
 export class Alignment {
-  @Field()
+  @Field(type => GoodType)
   good!: GoodType
 
-  @Field()
+  @Field(type => LawfulType)
   lawful!: LawfulType
+
+  @Field(type => String, { description: 'The full alignment description, e.g. "Lawful Good", "Chaotic Unknown", "Neutral", or "Unknown"' })
+  get description () {
+    if (this.good.toString() === this.lawful.toString()) return this.good.toString()
+    return `${this.lawful.toString()} ${this.good.toString()}`
+  }
 }
