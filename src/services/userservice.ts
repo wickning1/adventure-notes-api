@@ -35,7 +35,7 @@ export class UserService extends BaseService {
     const { hash, salt } = saltAndHash(userData.password)
     const user = { ...userData, password: hash, salt }
     const insertId = (await db.collection('users').insertOne(user)).insertedId
-    return this.cleanse({ ...user, id: insertId })
+    return this.cleanse({ ...user, _id: insertId })
   }
 
   async checkLogin (email: string, password: string) {
@@ -44,3 +44,7 @@ export class UserService extends BaseService {
     throw new Error('Authentication failed.')
   }
 }
+
+UserService.onStartup(async () => {
+  db.collection('users').createIndex('email', { unique: true })
+})
