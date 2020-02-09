@@ -1,0 +1,7 @@
+version: '3'
+services:
+  adventure-notes-api:
+    build:
+      context: .
+    ports:
+      - 4000:80

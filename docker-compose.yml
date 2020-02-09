@@ -1,0 +1,12 @@
+version: '3'
+services:
+  adventure-notes-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - 127.0.0.1:${ADVENTURE_NOTES_API_DEBUG:-9229}:9229
+      - 4000:80
+    volumes:
+      - ./src:/usr/app/src
+      - ./dist:/usr/app/dist

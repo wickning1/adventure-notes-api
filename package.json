@@ -1,0 +1,61 @@
+{
+  "name": "adventure-notes-api",
+  "version": "1.0.0",
+  "description": "An API for storing player and DM notes related to a role playing campaign.",
+  "main": "main.js",
+  "scripts": {
+    "compile": "tsc",
+    "nodemon": "nodemon",
+    "start-dev": "node --inspect=0.0.0.0:9229 dist/main.js",
+    "start-prod": "node dist/main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "apollo-server": "^2.10.0",
+    "dataloader-factory": "^2.0.0",
+    "graphql": "^14.6.0",
+    "reflect-metadata": "^0.1.13",
+    "source-map-support": "0.5.16",
+    "type-graphql": "^0.17.6",
+    "typedi": "^0.8.0"
+  },
+  "devDependencies": {
+    "@types/source-map-support": "^0.4.0",
+    "eslint": "^6.8.0",
+    "@typescript-eslint/eslint-plugin": "^2.19.0",
+    "@typescript-eslint/parser": "^2.19.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "4.0.1",
+    "nodemon": "^2.0.2",
+    "typescript": "^3.7.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wickning1/adventure-notes-api.git"
+  },
+  "keywords": [
+    "dnd",
+    "roleplaying",
+    "notes",
+    "campaign",
+    "adventure",
+    "dungeons",
+    "dragons",
+    "5e"
+  ],
+  "author": "Nick Wing",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wickning1/adventure-notes-api/issues"
+  },
+  "homepage": "https://github.com/wickning1/adventure-notes-api#readme",
+  "nodemonConfig": {
+    "watch": [ "src" ],
+    "ext": "ts",
+    "delay": "80ms",
+    "exec": "npm run compile && npm run start-dev"
+  }
+}
