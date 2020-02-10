@@ -1,6 +1,7 @@
 import { ClassType, InputType, ObjectType, FieldResolver, Root, Field, Resolver } from 'type-graphql'
-import { Ref, MongoID } from '../lib'
+import { Ref } from '../lib'
 import { Character } from '../models'
+import { ObjectId } from 'mongodb'
 
 export function withKnownBy<T extends ClassType> (NextMixinClass: T) {
   @ObjectType({ isAbstract: true })
@@ -16,7 +17,7 @@ export function withKnownByResolver<T extends ClassType, M extends ClassType> (O
   @Resolver(of => ObjectClass, { isAbstract: true })
   abstract class KnownByResolver extends NextMixinClass {
     @FieldResolver(returns => [Character])
-    async knownby (@Root() obj: { knownby: MongoID[] }) {
+    async knownby (@Root() obj: { knownby: ObjectId[] }) {
       return []
     }
   }

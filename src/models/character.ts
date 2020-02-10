@@ -1,8 +1,9 @@
-import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg, ID } from 'type-graphql'
-import { Context, Ref, MongoID } from '../lib'
+import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg } from 'type-graphql'
+import { Context, Ref } from '../lib'
 import { Alignment } from '../nested'
 import { Adventure, User } from '.'
 import { withKnownByResolver, withKnownBy, withId } from '../mixins'
+import { ObjectId } from 'mongodb'
 
 @ObjectType({ isAbstract: true })
 @InputType('CharacterDetailsInput', { isAbstract: true })
@@ -28,7 +29,7 @@ export class Character extends withKnownBy(withId(CharacterDetails)) {
 export class CharacterResolver extends withKnownByResolver(Character, Object) {
   @Query(returns => [Character])
   async characters (
-    @Arg('adventure', type => ID) adventure: MongoID,
+    @Arg('adventure') adventure: ObjectId,
     @Arg('mayLoginAs', { nullable: true, description: 'When true, query only returns characters for which the user is permitted to use the "Point of View" feature.' }) mayLoginAs: boolean
   ) {
     return []

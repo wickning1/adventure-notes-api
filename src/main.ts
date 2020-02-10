@@ -4,15 +4,16 @@ import { ApolloServer } from 'apollo-server'
 import { buildSchema } from 'type-graphql'
 import { DataLoaderFactory } from 'dataloader-factory'
 import { CharacterResolver, UserResolver, AdventureResolver } from './models'
-import { Context } from './lib'
-import { connectMongo } from './lib/db'
+import { Context, mongo, ObjectIdScalar } from './lib'
 import { BaseService } from './services'
+import { ObjectId } from 'mongodb'
 
 install()
 
 async function main () {
   const schema = await buildSchema({
-    resolvers: [AdventureResolver, CharacterResolver, UserResolver]
+    resolvers: [AdventureResolver, CharacterResolver, UserResolver],
+    scalarsMap: [{ type: ObjectId, scalar: ObjectIdScalar }]
   })
 
   const server = new ApolloServer({
@@ -23,7 +24,7 @@ async function main () {
   })
 
   // Start the server
-  await connectMongo()
+  await mongo.start()
   await BaseService.start()
   const { url } = await server.listen(80)
   console.log(`Server is running, GraphQL Playground available at ${url}`)

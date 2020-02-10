@@ -1,2 +1,3 @@
-export type MongoID = string
-export type Ref<T> = T | MongoID
+import { ObjectId } from 'mongodb'
+
+export type Ref<T> = T | ObjectId

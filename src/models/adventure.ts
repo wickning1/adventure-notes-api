@@ -1,7 +1,8 @@
-import { ObjectType, Field, Int, Resolver, Query, Arg, FieldResolver, InputType, ID } from 'type-graphql'
-import { MongoID, Ref } from '../lib'
+import { ObjectType, Field, Int, Resolver, Query, Arg, FieldResolver, InputType, Mutation, Ctx } from 'type-graphql'
+import { Ref, ObjectIdScalar, Context } from '../lib'
 import { Character, User } from '.'
-import { withId } from '../mixins'
+import { withId, BaseUpdateInput } from '../mixins'
+import { ObjectId } from 'mongodb'
 
 @ObjectType({ isAbstract: true })
 @InputType('AdventureDetailsInput', { isAbstract: true })
@@ -20,10 +21,22 @@ export class Adventure extends withId(AdventureDetails) {
   dm!: Ref<User>
 }
 
+@InputType()
+export class AdventureUpdate extends BaseUpdateInput {
+  @Field()
+  name?: string
+
+  @Field(type => Int)
+  day?: number
+
+  @Field()
+  dm?: ObjectId
+}
+
 @Resolver(of => Adventure)
 export class AdventureResolver {
   @Query(returns => [Adventure])
-  async adventures (@Arg('ids', type => [ID]) ids: MongoID[]): Promise<Adventure[]> {
+  async adventures (@Arg('ids', type => [ObjectIdScalar]) ids: ObjectId[]): Promise<Adventure[]> {
     return []
   }
 
@@ -37,5 +50,10 @@ export class AdventureResolver {
   @FieldResolver(returns => [Character])
   async characters (): Promise<Character[]> {
     return []
+  }
+
+  @Mutation(returns => Adventure)
+  async updateAdventure (@Arg('info') info: AdventureUpdate, @Ctx() ctx: Context) {
+    return ctx.adventureService.update(info)
   }
 }

@@ -1,12 +1,13 @@
-import { MongoID, toClass, saltAndHash, checkSaltedHash, toArray } from '../lib'
+import { mongo, toClass, saltAndHash, checkSaltedHash, toArray } from '../lib'
 import { BaseService } from '.'
-import { db } from '../lib/db'
 import { DataLoaderFactory } from 'dataloader-factory'
-import { User, UserInput } from '../models'
+import { User, UserInput, UserUpdate } from '../models'
+import { UserInputError } from 'apollo-server'
+import { ObjectId } from 'mongodb'
 
 DataLoaderFactory.register('users', {
-  fetch: async (ids: MongoID[]) => {
-    return db.collection('users').find({ id: ids }).toArray()
+  fetch: async (ids: ObjectId[]) => {
+    return mongo.db.collection('users').find({ _id: { $in: ids } }).toArray()
   }
 })
 
@@ -21,29 +22,33 @@ export class UserService extends BaseService {
     else return toClass(ret[0], User)
   }
 
-  async get (id: MongoID) {
-    return this.cleanse(await this.ctx.dataLoaderFactory.get('users').load(id))
+  async get (id: ObjectId): Promise<User> {
+    return super.get(id, 'users')
   }
 
   async getMany () {
-    const users = await db.collection('users').find().toArray()
+    const users = await mongo.db.collection('users').find().toArray()
     return this.cleanse(users)
   }
 
   async create (userData: UserInput) {
-    if (!userData.password?.length) throw new Error('Password is required.')
+    if (!userData.password?.length) throw new UserInputError('Password is required.')
     const { hash, salt } = saltAndHash(userData.password)
     const user = { ...userData, password: hash, salt, _version: 0 }
-    const insertId = (await db.collection('users').insertOne(user)).insertedId
+    const insertId = (await mongo.db.collection('users').insertOne(user)).insertedId
     return this.cleanse({ ...user, _id: insertId })
   }
 
+  async update (userData: UserUpdate): Promise<User> {
+    return super.update(userData, 'users')
+  }
+
   async checkLogin (email: string, password: string) {
-    const userData = await db.collection('users').findOne({ email })
+    const userData = await mongo.db.collection('users').findOne({ email })
     if (userData?.password && userData?.salt && checkSaltedHash(password, userData.password, userData.salt)) return this.cleanse(userData)
   }
 }
 
 UserService.onStartup(async () => {
-  db.collection('users').createIndex('email', { unique: true })
+  mongo.db.collection('users').createIndex('email', { unique: true })
 })
