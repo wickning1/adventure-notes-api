@@ -12,11 +12,10 @@ export class Context {
   private userServiceInstance?: UserService
 
   constructor (authHeader: string | undefined, dataLoaderFactory: DataLoaderFactory) {
-    if (!process.env.JWT_SECRET) throw new Error('JWT secret has not been set. The server is misconfigured.')
     this.dataLoaderFactory = dataLoaderFactory
     const m = authHeader?.match(/^bearer (.*)$/i)
     const token = m?.[1]
-    const payload: any = token ? jwt.verify(token, process.env.JWT_SECRET) : {}
+    const payload: any = token ? jwt.verify(token, this.jwtSecret) : {}
     this.adventure = payload.adventure
     this.user = payload.user
     this.character = payload.character
@@ -32,8 +31,12 @@ export class Context {
     return this.userServiceInstance
   }
 
-  getToken (payload: { user: ObjectId, adventure?: ObjectId, character?: ObjectId }) {
+  private get jwtSecret () {
     if (!process.env.JWT_SECRET) throw new Error('JWT secret has not been set. The server is misconfigured.')
-    return jwt.sign(payload, process.env.JWT_SECRET)
+    return process.env.JWT_SECRET
+  }
+
+  getToken (payload: { user: ObjectId, adventure?: ObjectId, character?: ObjectId }) {
+    return jwt.sign(payload, this.jwtSecret)
   }
 }
