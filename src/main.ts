@@ -13,8 +13,7 @@ install()
 async function main () {
   const schema = await buildSchema({
     resolvers: [AdventureResolver, CharacterResolver, UserResolver],
-    scalarsMap: [{ type: ObjectId, scalar: ObjectIdScalar }],
-    validate: false
+    scalarsMap: [{ type: ObjectId, scalar: ObjectIdScalar }]
   })
 
   const server = new ApolloServer({
