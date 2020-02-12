@@ -1,21 +1,10 @@
-import { mongo, saltAndHash, checkSaltedHash, Context } from '../lib'
-import { BaseService } from '.'
-import { DataLoaderFactory } from 'dataloader-factory'
+import { mongo, saltAndHash, checkSaltedHash } from '../lib'
+import { createBaseService } from '.'
+// import { DataLoaderFactory } from 'dataloader-factory'
 import { User, UserInput, UserUpdate } from '../models'
 import { UserInputError } from 'apollo-server'
-import { ObjectId } from 'mongodb'
 
-DataLoaderFactory.register('users', {
-  fetch: async (ids: ObjectId[]) => {
-    return mongo.db.collection('users').find({ _id: { $in: ids } }).toArray()
-  }
-})
-
-export class UserService extends BaseService<User> {
-  constructor (ctx: Context) {
-    super(ctx, 'users', User)
-  }
-
+export class UserService extends createBaseService('users', User) {
   cleanse (item: any) {
     return { ...item, email: item._id.toString() === this.ctx.user ? item.email : '' }
   }

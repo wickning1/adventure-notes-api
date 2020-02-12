@@ -5,7 +5,7 @@ import { withId, BaseUpdateInput } from '../mixins'
 import { ObjectId } from 'mongodb'
 
 @ObjectType({ isAbstract: true })
-@InputType('AdventureDetailsInput', { isAbstract: true })
+@InputType()
 export class AdventureDetails {
   @Field()
   name!: string

@@ -56,7 +56,9 @@
   },
   "homepage": "https://github.com/wickning1/adventure-notes-api#readme",
   "nodemonConfig": {
-    "watch": [ "src" ],
+    "watch": [
+      "src"
+    ],
     "ext": "ts",
     "delay": "80ms",
     "exec": "npm run compile && npm run start-dev"

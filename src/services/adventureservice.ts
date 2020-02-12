@@ -1,18 +1,9 @@
-import { BaseService } from './baseservice'
-import { AdventureUpdate, Adventure } from '../models'
-import { mongo, Context } from '../lib'
-import { ObjectId } from 'mongodb'
-import { DataLoaderFactory } from 'dataloader-factory'
+import { createBaseService } from './baseservice'
+import { AdventureUpdate, Adventure, AdventureDetails } from '../models'
 
-DataLoaderFactory.register('adventures', {
-  fetch: async (ids: ObjectId[]) => {
-    return mongo.db.collection('users').find({ _id: { $in: ids } }).toArray()
-  }
-})
-
-export class AdventureService extends BaseService<Adventure> {
-  constructor (ctx: Context) {
-    super(ctx, 'adventures', Adventure)
+export class AdventureService extends createBaseService('adventures', Adventure) {
+  async create (info: AdventureDetails) {
+    return super.create(info)
   }
 
   async update (info: AdventureUpdate): Promise<Adventure> {
