@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 
-export function toArray<ItemType> (items: ItemType | ItemType[]) {
+export function toArray<ItemType> (items: ItemType | ItemType[]): ItemType[] {
   return Array.isArray(items) ? items : [items]
 }
 

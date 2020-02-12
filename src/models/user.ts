@@ -54,7 +54,7 @@ export class UserResolver {
 
   @Query(returns => [User])
   async users (@Ctx() ctx: Context) {
-    return ctx.userService.getMany()
+    return ctx.userService.find()
   }
 
   @FieldResolver(returns => [Character])
