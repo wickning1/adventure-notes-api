@@ -1,5 +1,4 @@
 import { ClassType, InputType, ObjectType, FieldResolver, Root, Field, Resolver } from 'type-graphql'
-import { Ref } from '../lib'
 import { Character } from '../models'
 import { ObjectId } from 'mongodb'
 
@@ -8,7 +7,7 @@ export function withKnownBy<T extends ClassType> (NextMixinClass: T) {
   @InputType({ isAbstract: true })
   class KnownByTrait extends NextMixinClass {
     @Field(type => [Character])
-    knownby!: Ref<Character>
+    knownby!: ObjectId[]
   }
   return KnownByTrait
 }

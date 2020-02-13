@@ -1,8 +1,10 @@
 import { ObjectType, InputType, Field, Resolver, FieldResolver, Root, Ctx, Query, Mutation, Arg } from 'type-graphql'
 import { withId, BaseUpdateInput } from '../mixins'
-import { Ref, Context } from '../lib'
+import { Context, ObjectIdScalar } from '../lib'
 import { Character } from './character'
 import { ApolloError } from 'apollo-server'
+import { ObjectId } from 'mongodb'
+import { Adventure } from './adventure'
 
 @ObjectType({ isAbstract: true })
 @InputType({ isAbstract: true })
@@ -17,7 +19,7 @@ export class UserDetails {
 @ObjectType()
 export class User extends withId(UserDetails) {
   @Field(type => [Character])
-  characters!: Ref<Character[]>
+  characters!: ObjectId[]
 }
 
 @InputType()
@@ -53,13 +55,18 @@ export class UserResolver {
   }
 
   @Query(returns => [User])
-  async users (@Ctx() ctx: Context) {
-    return ctx.userService.find()
+  async users (@Arg('ids', type => [ObjectIdScalar], { nullable: true }) ids: ObjectId[], @Ctx() ctx: Context) {
+    return ctx.userService.getFiltered({ ids })
   }
 
   @FieldResolver(returns => [Character])
   async characters (@Root() user: User, @Ctx() ctx: Context): Promise<Character[]> {
     return []
+  }
+
+  @FieldResolver(returns => [Adventure])
+  async dmForAdventures (@Root() user: User, @Ctx() ctx: Context) {
+    return ctx.adventureService.getByDmId(user.id)
   }
 
   @Mutation(returns => User)

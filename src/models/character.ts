@@ -1,5 +1,5 @@
 import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg } from 'type-graphql'
-import { Context, Ref } from '../lib'
+import { Context } from '../lib'
 import { Alignment } from '../nested'
 import { Adventure, User } from '.'
 import { withKnownByResolver, withKnownBy, withId } from '../mixins'
@@ -22,7 +22,7 @@ class CharacterDetails {
 export class Character extends withKnownBy(withId(CharacterDetails)) {
   /** Local References **/
   @Field(type => Adventure)
-  adventure!: Ref<Adventure>
+  adventure!: ObjectId
 }
 
 @Resolver(of => Character)

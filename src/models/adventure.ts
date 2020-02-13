@@ -1,5 +1,5 @@
-import { ObjectType, Field, Int, Resolver, Query, Arg, FieldResolver, InputType, Mutation, Ctx } from 'type-graphql'
-import { Ref, ObjectIdScalar, Context } from '../lib'
+import { ObjectType, Field, Int, Resolver, Query, Arg, FieldResolver, InputType, Mutation, Ctx, Root } from 'type-graphql'
+import { ObjectIdScalar, Context } from '../lib'
 import { Character, User } from '.'
 import { withId, BaseUpdateInput } from '../mixins'
 import { ObjectId } from 'mongodb'
@@ -18,7 +18,7 @@ export class Adventure extends withId(AdventureDetails) {
 
   /** Local References **/
   @Field(type => User)
-  dm!: Ref<User>
+  dm!: ObjectId
 }
 
 @InputType()
@@ -42,8 +42,8 @@ export class AdventureResolver {
 
   /** Local References **/
   @FieldResolver(returns => User)
-  async dm () {
-    return new User()
+  async dm (@Root() adventure: Adventure, @Ctx() ctx: Context) {
+    return ctx.userService.get(adventure.dm)
   }
 
   /** Foreign References **/
