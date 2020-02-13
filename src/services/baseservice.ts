@@ -36,6 +36,15 @@ export function createBaseService<MC extends ClassType, T extends InstanceType<M
       return item
     }
 
+    translatefilters (filter: any) {
+      // to be further implemented by subclasses
+      const ret: any = {}
+      if (filter.ids) {
+        ret._id = { $in: filter.ids }
+      }
+      return ret
+    }
+
     toModel (items: any[]): T[]
     toModel (items: any): T | undefined
     toModel (items: any): any {
@@ -50,7 +59,12 @@ export function createBaseService<MC extends ClassType, T extends InstanceType<M
     }
 
     async getMany (ids: ObjectId[]) {
-      return Promise.all(ids.map(id => this.get(id)))
+      return (await Promise.all(ids.map(id => this.get(id)))).filter(Boolean) as T[]
+    }
+
+    async getFiltered (filter: any) {
+      const finalfilter = this.translatefilters(filter)
+      return this.toModel(await BaseService.find(finalfilter))
     }
 
     async create (info: any) {

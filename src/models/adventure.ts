@@ -36,8 +36,8 @@ export class AdventureUpdate extends BaseUpdateInput {
 @Resolver(of => Adventure)
 export class AdventureResolver {
   @Query(returns => [Adventure])
-  async adventures (@Arg('ids', type => [ObjectIdScalar]) ids: ObjectId[]): Promise<Adventure[]> {
-    return []
+  async adventures (@Arg('ids', type => [ObjectIdScalar]) ids: ObjectId[], @Ctx() ctx: Context): Promise<Adventure[]> {
+    return ctx.adventureService.getFiltered({ ids })
   }
 
   /** Local References **/
