@@ -1,4 +1,4 @@
-import { ObjectType, registerEnumType, Field } from 'type-graphql'
+import { ObjectType, registerEnumType, Field, InputType } from 'type-graphql'
 
 export enum GoodType {
   GOOD = 'Good',
@@ -21,14 +21,18 @@ registerEnumType(LawfulType, {
   description: 'Whether this object tends toward lawful or chaotic or is neutral.'
 })
 
-@ObjectType()
-export class Alignment {
+@ObjectType({ isAbstract: true })
+@InputType()
+export class AlignmentDetails {
   @Field(type => GoodType)
   good!: GoodType
 
   @Field(type => LawfulType)
   lawful!: LawfulType
+}
 
+@ObjectType()
+export class Alignment extends AlignmentDetails {
   @Field(type => String, { description: 'The full alignment description, e.g. "Lawful Good", "Chaotic Unknown", "Neutral", or "Unknown"' })
   get description () {
     if (this.good.toString() === this.lawful.toString()) return this.good.toString()

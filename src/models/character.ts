@@ -1,13 +1,13 @@
 import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg } from 'type-graphql'
-import { Context } from '../lib'
-import { Alignment } from '../nested'
+import { Context, ObjectIdScalar } from '../lib'
+import { Alignment, AlignmentDetails } from '../nested'
 import { Adventure, User } from '.'
-import { withKnownByResolver, withKnownBy, withId } from '../mixins'
+import { withKnownByResolver, withKnownBy, withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
 import { ObjectId } from 'mongodb'
 
 @ObjectType({ isAbstract: true })
-@InputType('CharacterDetailsInput', { isAbstract: true })
-class CharacterDetails {
+@InputType()
+export class CharacterDetails {
   @Field()
   name!: string
 
@@ -25,13 +25,31 @@ export class Character extends withKnownBy(withId(CharacterDetails)) {
   adventure!: ObjectId
 }
 
+@InputType()
+export class CharacterUpdate extends BaseUpdateInput {
+  @Field({ nullable: true })
+  name?: string
+
+  @Field(type => [String], { nullable: true })
+  aliases?: string[]
+
+  @Field(type => AlignmentDetails, { nullable: true })
+  alignment?: AlignmentDetails
+}
+
+@InputType()
+export class CharacterFilters extends BaseFilterInput {
+  @Field(type => [ObjectIdScalar], { nullable: true })
+  adventures?: ObjectId[]
+
+  @Field({ nullable: true, description: 'When true, query only returns characters for which the user is permitted to use the "Point of View" feature.' })
+  mayLoginAs?: boolean
+}
+
 @Resolver(of => Character)
 export class CharacterResolver extends withKnownByResolver(Character, Object) {
   @Query(returns => [Character])
-  async characters (
-    @Arg('adventure') adventure: ObjectId,
-    @Arg('mayLoginAs', { nullable: true, description: 'When true, query only returns characters for which the user is permitted to use the "Point of View" feature.' }) mayLoginAs: boolean
-  ) {
+  async characters (@Ctx() ctx: Context, @Arg('filter', { nullable: true }) filter?: CharacterFilters) {
     return []
   }
 

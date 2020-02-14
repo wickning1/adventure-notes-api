@@ -10,7 +10,7 @@ export class UserService extends BaseService<User> {
 
   cleanse (item: User) {
     if (item.id !== this.ctx.user) delete item.email
-    return item
+    return super.cleanse(item)
   }
 
   async create (userData: UserInput) {

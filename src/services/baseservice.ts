@@ -1,4 +1,4 @@
-import { Context, mongo, ConcurrencyError, toArray, toClass } from '../lib'
+import { Context, mongo, ConcurrencyError, toArray, toClass, AdventureNotChosenError } from '../lib'
 import { ObjectId, IndexOptions } from 'mongodb'
 import { ClassType } from 'type-graphql'
 import { UserInputError } from 'apollo-server'
@@ -41,12 +41,12 @@ export class BaseService<T> {
     return toClass(items, this.ModelClass)
   }
 
-  cleanse (item: T) {
+  cleanse (item: T): T|undefined {
     // to be implemented by subclasses
     return item
   }
 
-  translatefilters (filter: any = {}) {
+  async translatefilters (filter: any = {}) {
     // to be further implemented by subclasses
     const ret: any = {}
     if (filter.ids) {
@@ -58,7 +58,7 @@ export class BaseService<T> {
   process (items: any[]): T[]
   process (items: any): T | undefined
   process (items: any): any {
-    const ret = (this.constructor as typeof BaseService).toModel<T>(toArray(items)).map(this.cleanse.bind(this))
+    const ret = (this.constructor as typeof BaseService).toModel<T>(toArray(items)).map(this.cleanse.bind(this)).filter(Boolean)
     if (Array.isArray(items)) return ret
     else return ret[0]
   }
@@ -72,7 +72,7 @@ export class BaseService<T> {
   }
 
   async getFiltered (filter: any = {}) {
-    const finalfilter = this.translatefilters(filter)
+    const finalfilter = await this.translatefilters(filter)
     return this.process(await (this.constructor as typeof BaseService).find(finalfilter))
   }
 
@@ -98,5 +98,17 @@ export class BaseService<T> {
 
   static async createIndex (column: any, options: IndexOptions = {}) {
     return mongo.db.collection(this.dlname).createIndex(column, options)
+  }
+}
+
+export class KnownByService<T extends { knownby?: ObjectId[] }> extends BaseService<T> {
+  cleanse (item: T) {
+    if (item.knownby && this.ctx.user && !item.knownby.includes(this.ctx.user)) return undefined
+    super.cleanse(item)
+  }
+
+  async create (info: any) {
+    if (!this.ctx.adventure) throw new AdventureNotChosenError()
+    return super.create({ ...info, adventure: this.ctx.adventure, knownby: this.ctx.character ? [this.ctx.character] : [] })
   }
 }

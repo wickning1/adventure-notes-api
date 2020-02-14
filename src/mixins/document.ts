@@ -26,6 +26,6 @@ export class BaseUpdateInput {
 
 @InputType({ isAbstract: true })
 export class BaseFilterInput {
-  @Field(type => [ObjectIdScalar])
+  @Field(type => [ObjectIdScalar], { nullable: true })
   ids?: ObjectId[]
 }

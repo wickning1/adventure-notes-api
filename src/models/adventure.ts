@@ -35,7 +35,7 @@ export class AdventureUpdate extends BaseUpdateInput {
 
 @InputType()
 export class AdventureFilters extends BaseFilterInput {
-  @Field(type => [ObjectIdScalar])
+  @Field(type => [ObjectIdScalar], { nullable: true })
   gamemasters?: ObjectId[]
 }
 

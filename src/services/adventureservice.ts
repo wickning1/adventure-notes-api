@@ -14,8 +14,8 @@ export class AdventureService extends BaseService<Adventure> {
   static get dlname () { return 'adventures' }
   static get ModelClass () { return Adventure }
 
-  translatefilters (filter: any) {
-    const ret = super.translatefilters(filter)
+  async translatefilters (filter: any) {
+    const ret = await super.translatefilters(filter)
     if (filter.gamemasters) ret.gamemaster = { $in: filter.gamemasters }
     return ret
   }
