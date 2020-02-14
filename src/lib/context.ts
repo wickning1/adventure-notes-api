@@ -2,6 +2,7 @@ import { DataLoaderFactory } from 'dataloader-factory'
 import { UserService, AdventureService } from '../services'
 import jwt from 'jsonwebtoken'
 import { ObjectId } from 'mongodb'
+import { CharacterService } from '../services/characterservice'
 
 export class Context {
   public adventure?: ObjectId
@@ -10,6 +11,7 @@ export class Context {
   public dataLoaderFactory: DataLoaderFactory
   private adventureServiceInstance?: AdventureService
   private userServiceInstance?: UserService
+  private characterServiceInstance?: CharacterService
 
   constructor (authHeader: string | undefined, dataLoaderFactory: DataLoaderFactory) {
     this.dataLoaderFactory = dataLoaderFactory
@@ -29,6 +31,11 @@ export class Context {
   get userService () {
     if (!this.userServiceInstance) this.userServiceInstance = new UserService(this)
     return this.userServiceInstance
+  }
+
+  get characterService () {
+    if (!this.characterServiceInstance) this.characterServiceInstance = new CharacterService(this)
+    return this.characterServiceInstance
   }
 
   private get jwtSecret () {

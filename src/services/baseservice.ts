@@ -102,9 +102,26 @@ export class BaseService<T> {
 }
 
 export class KnownByService<T extends { knownby?: ObjectId[] }> extends BaseService<T> {
+  static onStartup (callback?: () => Promise<void>) {
+    console.log('KnownByService.onStartup')
+    super.onStartup(callback)
+    startups.push(async () => {
+      await this.createIndex('adventure')
+      await this.createIndex('knownby')
+    })
+  }
+
   cleanse (item: T) {
     if (item.knownby && this.ctx.user && !item.knownby.includes(this.ctx.user)) return undefined
     super.cleanse(item)
+  }
+
+  async translatefilters (filter: any) {
+    // to be further implemented by subclasses
+    if (!this.ctx.adventure) throw new AdventureNotChosenError()
+    const ret = await super.translatefilters(filter)
+    ret.adventure = this.ctx.adventure
+    return ret
   }
 
   async create (info: any) {

@@ -4,12 +4,11 @@ import { ObjectId } from 'mongodb'
 // import { DataLoaderFactory } from 'dataloader-factory'
 
 export class CharacterService extends KnownByService<Character> {
-  static get dlname () { return 'adventures' }
+  static get dlname () { return 'characters' }
   static get ModelClass () { return Character }
 
   async translatefilters (filter: CharacterFilters) {
     const ret = await super.translatefilters(filter)
-    if (filter.adventures) ret.adventure = { $in: filter.adventures }
     if (filter.mayLoginAs) ret.player = this.ctx.user
     return ret
   }
@@ -29,5 +28,5 @@ export class CharacterService extends KnownByService<Character> {
 
 CharacterService.onStartup(async () => {
   await CharacterService.createIndex('name', { unique: true })
-  await CharacterService.createIndex('adventure')
+  await CharacterService.createIndex('player', { sparse: true })
 })
