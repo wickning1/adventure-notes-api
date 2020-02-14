@@ -46,7 +46,7 @@ export class BaseService<T> {
     return item
   }
 
-  translatefilters (filter: any) {
+  translatefilters (filter: any = {}) {
     // to be further implemented by subclasses
     const ret: any = {}
     if (filter.ids) {
@@ -64,14 +64,14 @@ export class BaseService<T> {
   }
 
   async get (id: ObjectId) {
-    return this.process(this.ctx.dataLoaderFactory.get(this.dlname).load(id))
+    return this.process(await this.ctx.dataLoaderFactory.get(this.dlname).load(id))
   }
 
   async getMany (ids: ObjectId[]) {
     return (await Promise.all(ids.map(id => this.get(id)))).filter(Boolean) as T[]
   }
 
-  async getFiltered (filter: any) {
+  async getFiltered (filter: any = {}) {
     const finalfilter = this.translatefilters(filter)
     return this.process(await (this.constructor as typeof BaseService).find(finalfilter))
   }
@@ -84,7 +84,9 @@ export class BaseService<T> {
 
   async update (info: any) {
     const { id, _version, ...updatedoc } = info
-    const result = await mongo.db.collection(this.dlname).updateOne({ _id: id, _version: _version }, {
+    const search: any = { _id: id }
+    if (_version) search._version = _version
+    const result = await mongo.db.collection(this.dlname).updateOne(search, {
       $set: updatedoc,
       $inc: { _version: 1 }
     })

@@ -5,18 +5,18 @@ import { DataLoaderFactory } from 'dataloader-factory'
 
 DataLoaderFactory.registerOneToMany<ObjectId, Adventure>('adventureByDmId', {
   fetch: async (ids, filters) => {
-    return AdventureService.find<Adventure>({ ...filters, dm: ids })
+    return AdventureService.find<Adventure>({ ...filters, gamemasters: ids })
   },
-  extractKey: adventure => adventure.dm
+  extractKey: adventure => adventure.gamemaster
 })
 
 export class AdventureService extends BaseService<Adventure> {
-  static get dlname (): string { return 'adventures' }
+  static get dlname () { return 'adventures' }
   static get ModelClass () { return Adventure }
 
   translatefilters (filter: any) {
     const ret = super.translatefilters(filter)
-    if (filter.dm) ret.dm = { $in: filter.dm }
+    if (filter.gamemasters) ret.gamemaster = { $in: filter.gamemasters }
     return ret
   }
 
@@ -25,7 +25,7 @@ export class AdventureService extends BaseService<Adventure> {
   }
 
   async create (info: AdventureDetails) {
-    return super.create(info)
+    return super.create({ ...info, gamemaster: this.ctx.user, day: 0 })
   }
 
   async update (info: AdventureUpdate): Promise<Adventure> {
@@ -34,5 +34,6 @@ export class AdventureService extends BaseService<Adventure> {
 }
 
 AdventureService.onStartup(async () => {
-  AdventureService.createIndex('dm')
+  await AdventureService.createIndex('name', { unique: true })
+  await AdventureService.createIndex('gamemaster')
 })

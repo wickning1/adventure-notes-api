@@ -1,7 +1,7 @@
 import { ObjectType, Field, Int, Resolver, Query, Arg, FieldResolver, InputType, Mutation, Ctx, Root } from 'type-graphql'
 import { ObjectIdScalar, Context } from '../lib'
 import { Character, User } from '.'
-import { withId, BaseUpdateInput } from '../mixins'
+import { withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
 import { ObjectId } from 'mongodb'
 
 @ObjectType({ isAbstract: true })
@@ -18,38 +18,49 @@ export class Adventure extends withId(AdventureDetails) {
 
   /** Local References **/
   @Field(type => User)
-  dm!: ObjectId
+  gamemaster!: ObjectId
 }
 
 @InputType()
 export class AdventureUpdate extends BaseUpdateInput {
-  @Field()
+  @Field({ nullable: true })
   name?: string
 
-  @Field(type => Int)
+  @Field(type => Int, { nullable: true })
   day?: number
 
-  @Field()
-  dm?: ObjectId
+  @Field({ nullable: true })
+  gamemaster?: ObjectId
+}
+
+@InputType()
+export class AdventureFilters extends BaseFilterInput {
+  @Field(type => [ObjectIdScalar])
+  gamemasters?: ObjectId[]
 }
 
 @Resolver(of => Adventure)
 export class AdventureResolver {
   @Query(returns => [Adventure])
-  async adventures (@Arg('ids', type => [ObjectIdScalar]) ids: ObjectId[], @Ctx() ctx: Context): Promise<Adventure[]> {
-    return ctx.adventureService.getFiltered({ ids })
+  async adventures (@Ctx() ctx: Context, @Arg('filter', { nullable: true }) filter?: AdventureFilters): Promise<Adventure[]> {
+    return ctx.adventureService.getFiltered(filter)
   }
 
   /** Local References **/
   @FieldResolver(returns => User)
-  async dm (@Root() adventure: Adventure, @Ctx() ctx: Context) {
-    return ctx.userService.get(adventure.dm)
+  async gamemaster (@Root() adventure: Adventure, @Ctx() ctx: Context) {
+    return ctx.userService.get(adventure.gamemaster)
   }
 
   /** Foreign References **/
   @FieldResolver(returns => [Character])
   async characters (): Promise<Character[]> {
     return []
+  }
+
+  @Mutation(returns => Adventure)
+  async createAdventure (@Arg('info') info: AdventureDetails, @Ctx() ctx: Context) {
+    return ctx.adventureService.create(info)
   }
 
   @Mutation(returns => Adventure)

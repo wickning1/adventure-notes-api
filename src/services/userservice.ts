@@ -5,11 +5,12 @@ import { User, UserInput, UserUpdate } from '../models'
 import { UserInputError } from 'apollo-server'
 
 export class UserService extends BaseService<User> {
-  static get dlname (): string { return 'users' }
+  static get dlname () { return 'users' }
   static get ModelClass () { return User }
 
-  cleanse (item: any) {
-    return { ...item, email: item._id.toString() === this.ctx.user ? item.email : '' }
+  cleanse (item: User) {
+    if (item.id !== this.ctx.user) delete item.email
+    return item
   }
 
   async create (userData: UserInput) {

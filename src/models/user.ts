@@ -1,6 +1,6 @@
 import { ObjectType, InputType, Field, Resolver, FieldResolver, Root, Ctx, Query, Mutation, Arg } from 'type-graphql'
-import { withId, BaseUpdateInput } from '../mixins'
-import { Context, ObjectIdScalar } from '../lib'
+import { withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
+import { Context } from '../lib'
 import { Character } from './character'
 import { ApolloError } from 'apollo-server'
 import { ObjectId } from 'mongodb'
@@ -12,8 +12,8 @@ export class UserDetails {
   @Field()
   name!: string
 
-  @Field()
-  email!: string
+  @Field({ nullable: true })
+  email?: string
 }
 
 @ObjectType()
@@ -40,6 +40,11 @@ export class UserUpdate extends BaseUpdateInput {
   password?: string
 }
 
+@InputType()
+export class UserFilter extends BaseFilterInput {
+
+}
+
 @ObjectType()
 export class JWT {
   @Field()
@@ -55,8 +60,8 @@ export class UserResolver {
   }
 
   @Query(returns => [User])
-  async users (@Arg('ids', type => [ObjectIdScalar], { nullable: true }) ids: ObjectId[], @Ctx() ctx: Context) {
-    return ctx.userService.getFiltered({ ids })
+  async users (@Ctx() ctx: Context, @Arg('filter', { nullable: true }) filter?: UserFilter) {
+    return ctx.userService.getFiltered(filter)
   }
 
   @FieldResolver(returns => [Character])
