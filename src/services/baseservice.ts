@@ -1,4 +1,4 @@
-import { Context, mongo, ConcurrencyError, toArray, toClass, AdventureNotChosenError, UnauthenticatedError } from '../lib'
+import { Context, mongo, ConcurrencyError, toClass, AdventureNotChosenError, UnauthenticatedError } from '../lib'
 import { ObjectId, IndexOptions } from 'mongodb'
 import { ClassType, UnauthorizedError } from 'type-graphql'
 import { UserInputError } from 'apollo-server'
@@ -26,35 +26,55 @@ export class BaseService<T> {
     DataLoaderFactory.register(this.dlname, {
       fetch: async (ids: ObjectId[], ctx: Context) => {
         const authfilter = await this.authfilters(ctx)
-        return this.toModel<any>(await mongo.db.collection(this.dlname).find({ ...authfilter, _id: { $in: ids } }).toArray())
+        return this.find({ ...authfilter, _id: { $in: ids } })
       }
     })
     if (callback) startups.push(callback)
   }
 
-  static async find<T> (filter: any = {}) {
+  public static async find<T> (filter: any = {}) {
     return this.toModel<T>(await mongo.db.collection(this.dlname).find(filter).toArray())
   }
 
-  protected static toModel<T> (items: any[]): T[]
-  protected static toModel<T> (items: any): T | undefined
-  protected static toModel (items: any): any {
+  // convenience method for calling the static find function from an instance
+  protected async find (filter: any) {
+    return (this.constructor as typeof BaseService).find<T>(filter)
+  }
+
+  private static toModel<T> (items: any[]): T[] {
     return toClass(items, this.ModelClass)
   }
 
-  protected async cleanse (item: T): Promise<T|undefined> {
-    // to be implemented by subclasses
-    return item
-  }
-
+  // gives services the option to add authorization based filtering before
+  // regular queries. the 'find' function skips this, but all the 'get*',
+  // 'create', 'update*', 'save' functions respect it
+  // overrides MUST call super and should do it at the end of their own logic
   protected static async authfilters (ctx: Context, authfilterarray: any[] = []) {
     if (!ctx.user) throw new UnauthenticatedError()
     if (ctx.superadmin || !authfilterarray.length) return {}
     else return { $and: authfilterarray }
   }
 
+  protected async cleanse (item: T): Promise<T|undefined> {
+    // to be implemented by subclasses
+    // gives services the option of removing sensitive properties from a
+    // document (or throwing) before returning to client
+    // e.g. remove email address from users other than self
+    return item
+  }
+
+  protected async cleanseAll (items: T[]): Promise<T[]> {
+    return (await Promise.all(items.map(this.cleanse.bind(this)))).filter(Boolean) as T[]
+  }
+
+  // provided by services to translate the graphql filter input (e.g. UserFilter)
+  // into a mongodb query filter
+  // BaseService.translatefilters also triggers 'authfilters' to make sure that
+  // part gets done
+  // do NOT place an $and at the top level as 'authfilters' will place all of its logic
+  // inside that and we don't want a conflict
+  // overrides should call super before their own logic
   protected async translatefilters (graphqlfilter: any = {}) {
-    // to be further implemented by subclasses
     const mongofilter: any = {}
     if (graphqlfilter.ids) {
       mongofilter._id = { $in: graphqlfilter.ids }
@@ -63,18 +83,9 @@ export class BaseService<T> {
     return { ...mongofilter, ...authfilters }
   }
 
-  protected async process (items: any[]): Promise<T[]>
-  protected async process (items: any): Promise<T | undefined>
-  protected async process (items: any): Promise<any> {
-    const models = (this.constructor as typeof BaseService).toModel<T>(toArray(items))
-    const ret = (await Promise.all(models.map(this.cleanse.bind(this)))).filter(Boolean)
-    if (Array.isArray(items)) return ret
-    else return ret[0]
-  }
-
   async get (id?: ObjectId) {
     if (!id) return undefined
-    return this.process(await this.ctx.dataLoaderFactory.get(this.dlname).load(id))
+    return this.cleanse(await this.ctx.dataLoaderFactory.get(this.dlname).load(id))
   }
 
   async getMany (ids: ObjectId[]) {
@@ -82,27 +93,27 @@ export class BaseService<T> {
     return (await Promise.all(ids.map(id => this.get(id)))).filter(Boolean) as T[]
   }
 
-  async getFiltered (filter: any = {}) {
-    const finalfilter = await this.translatefilters(filter)
-    return this.process(await (this.constructor as typeof BaseService).find(finalfilter))
+  async getFiltered (graphqlfilter: any = {}) {
+    const finalfilter = await this.translatefilters(graphqlfilter)
+    return this.cleanseAll(await this.find(finalfilter))
   }
 
-  async getOneToMany <KeyType> (registeredname: string, key: KeyType, filter: any = {}) {
-    const finalfilter = await this.translatefilters(filter)
+  async getOneToMany <KeyType> (registeredname: string, key: KeyType, graphqlfilter: any = {}) {
+    const finalfilter = await this.translatefilters(graphqlfilter)
     const dl = this.ctx.dataLoaderFactory.getOneToMany(registeredname, finalfilter)
-    return this.process(await dl.load(key))
+    return this.cleanseAll(await dl.load(key))
   }
 
   async getManyToMany <KeyType> (registeredname: string, key: KeyType, filter: any = {}) {
     const finalfilter = await this.translatefilters(filter)
     const dl = this.ctx.dataLoaderFactory.getManyToMany(registeredname, finalfilter)
-    return this.process(await dl.load(key))
+    return this.cleanseAll(await dl.load(key))
   }
 
   async create (info: any) {
     const updatedoc = { ...info, _version: 0 }
     const insertId = (await mongo.db.collection(this.dlname).insertOne(updatedoc)).insertedId
-    return this.process({ ...updatedoc, _id: insertId })
+    return this.get(insertId)
   }
 
   async update (id: ObjectId, updatedoc: any, search: any = {}) {
@@ -139,7 +150,7 @@ export class BelongsToAdventureService<T extends { adventure: ObjectId }> extend
   static onStartup (callback?: () => Promise<void>) {
     DataLoaderFactory.registerOneToMany(this.dlname + 'ByAdventureId', {
       fetch: async (adventureIds, filter) => {
-        return mongo.db.collection(this.dlname).find({ ...filter, adventure: { $in: adventureIds } }).toArray()
+        return this.find({ ...filter, adventure: { $in: adventureIds } })
       },
       extractKey: item => item.adventure
     })

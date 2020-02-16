@@ -1,6 +1,7 @@
 import { KnownByService } from './baseservice'
 import { CharacterUpdate, Character, CharacterDetails, CharacterFilters, Adventure } from '../models'
 import { ObjectId } from 'mongodb'
+import lodash from 'lodash'
 import { DataLoaderFactory } from 'dataloader-factory'
 import { UnauthenticatedError } from '../lib'
 import { AdventureService } from './adventureservice'
@@ -16,6 +17,12 @@ DataLoaderFactory.registerOneToMany<ObjectId, Character>('characterByPlayerId', 
 export class CharacterService extends KnownByService<Character> {
   static get dlname () { return 'characters' }
   static get ModelClass () { return Character }
+
+  async translatefilters (filter: CharacterFilters) {
+    const charIds = (await this.mayLoginAs(this.ctx.adventure)).map(c => c.id)
+    if (filter.ids?.length) filter.ids = lodash.intersectionBy(filter.ids, charIds, id => id.toHexString())
+    return super.translatefilters(filter)
+  }
 
   async mayLoginAs (adventureId?: ObjectId) {
     if (!this.ctx.user) throw new UnauthenticatedError()

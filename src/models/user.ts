@@ -112,8 +112,8 @@ export class UserResolver {
     @Ctx() ctx: Context,
     @Arg('adventure') adventureId: ObjectId
   ) {
-    const permission = await ctx.adventureService.mayLoginAsGM(adventureId)
-    if (!permission) throw new UnauthorizedError()
+    const adventures = await ctx.adventureService.getByGmId(ctx.user!, { ids: [adventureId] })
+    if (!adventures.length) throw new UnauthorizedError()
     const token = ctx.getToken({ user: ctx.user!, adventure: adventureId })
     return { token }
   }

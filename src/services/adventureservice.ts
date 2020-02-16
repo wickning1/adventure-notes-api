@@ -2,7 +2,7 @@ import { BaseService } from './baseservice'
 import { AdventureUpdate, Adventure, AdventureDetails, AdventureFilter } from '../models'
 import { ObjectId } from 'mongodb'
 import { DataLoaderFactory } from 'dataloader-factory'
-import { NotFoundError, Context, UnauthenticatedError } from '../lib'
+import { NotFoundError, Context } from '../lib'
 import { ForbiddenError } from 'type-graphql'
 
 DataLoaderFactory.registerOneToMany<ObjectId, Adventure>('adventureByDmId', {
@@ -38,12 +38,6 @@ export class AdventureService extends BaseService<Adventure> {
 
   async getByGmId (id: ObjectId, filter?: AdventureFilter) {
     return this.getOneToMany('adventureByDmId', id, filter)
-  }
-
-  async mayLoginAsGM (adventureId: ObjectId) {
-    if (!this.ctx.user) throw new UnauthenticatedError()
-    const adventure = await AdventureService.find<Adventure>({ _id: adventureId, gamemaster: this.ctx.user })
-    return Boolean(adventure)
   }
 
   async create (info: AdventureDetails) {
