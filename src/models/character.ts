@@ -1,8 +1,9 @@
-import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg } from 'type-graphql'
+import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg, Mutation } from 'type-graphql'
 import { Context } from '../lib'
 import { Alignment, AlignmentDetails } from '../nested'
 import { User } from '.'
 import { withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput } from '../mixins'
+import { ObjectId } from 'mongodb'
 
 @ObjectType({ isAbstract: true })
 @InputType({ isAbstract: true })
@@ -12,13 +13,18 @@ export class CharacterDetails {
 
   @Field(type => [String])
   aliases!: string[]
+
+  @Field()
+  player!: ObjectId
 }
 
 @ObjectType()
 export class Character extends withKnownBy(withId(CharacterDetails)) {
-  /** Local References **/
   @Field()
   alignment!: Alignment
+
+  @Field(type => User)
+  player!: ObjectId
 }
 
 @InputType()
@@ -37,6 +43,9 @@ export class CharacterUpdate extends BaseUpdateInput {
 
   @Field({ nullable: true })
   alignment?: AlignmentDetails
+
+  @Field({ nullable: true })
+  player?: ObjectId
 }
 
 @InputType()
@@ -49,14 +58,21 @@ export class CharacterFilters extends KnownByFilterInput {
 export class CharacterResolver extends withKnownByResolver(Character, Object) {
   @Query(returns => [Character])
   async characters (@Ctx() ctx: Context, @Arg('filter', { nullable: true }) filter?: CharacterFilters) {
-    return []
+    return ctx.characterService.getFiltered(filter)
   }
 
-  /** Local References **/
-
-  /** Foreign References **/
   @FieldResolver(returns => User, { nullable: true })
   async player (@Root() character: Character, @Ctx() ctx: Context) {
-    return new User()
+    return ctx.userService.get(character.player)
+  }
+
+  @Mutation(returns => Character)
+  async createCharacter (@Arg('info') info: CharacterCreate, @Ctx() ctx: Context) {
+    return ctx.characterService.create(info)
+  }
+
+  @Mutation(returns => Character)
+  async updateCharacter (@Arg('info') info: CharacterUpdate, @Ctx() ctx: Context) {
+    return ctx.characterService.save(info)
   }
 }

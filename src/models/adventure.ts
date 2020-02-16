@@ -34,7 +34,7 @@ export class AdventureUpdate extends BaseUpdateInput {
 }
 
 @InputType()
-export class AdventureFilters extends BaseFilterInput {
+export class AdventureFilter extends BaseFilterInput {
   @Field(type => [ObjectIdScalar], { nullable: true })
   gamemasters?: ObjectId[]
 }
@@ -42,7 +42,7 @@ export class AdventureFilters extends BaseFilterInput {
 @Resolver(of => Adventure)
 export class AdventureResolver {
   @Query(returns => [Adventure])
-  async adventures (@Ctx() ctx: Context, @Arg('filter', { nullable: true }) filter?: AdventureFilters): Promise<Adventure[]> {
+  async adventures (@Ctx() ctx: Context, @Arg('filter', { nullable: true }) filter?: AdventureFilter): Promise<Adventure[]> {
     return ctx.adventureService.getFiltered(filter)
   }
 
@@ -65,6 +65,15 @@ export class AdventureResolver {
 
   @Mutation(returns => Adventure)
   async updateAdventure (@Arg('info') info: AdventureUpdate, @Ctx() ctx: Context) {
-    return ctx.adventureService.update(info)
+    return ctx.adventureService.save(info)
+  }
+
+  @Mutation(returns => Boolean)
+  async updateKnownBy (
+    @Ctx() ctx: Context,
+    @Arg('nowKnownBy', type => [ObjectIdScalar]) nowKnownBy: ObjectId[],
+    @Arg('characters', type => [ObjectIdScalar], { nullable: true }) characters: ObjectId[]
+  ) {
+    return ctx.characterService.addKnownBy(characters, nowKnownBy)
   }
 }

@@ -8,7 +8,7 @@ export class UserService extends BaseService<User> {
   static get dlname () { return 'users' }
   static get ModelClass () { return User }
 
-  cleanse (item: User) {
+  async cleanse (item: User) {
     if (item.id !== this.ctx.user) delete item.email
     return super.cleanse(item)
   }
@@ -20,19 +20,21 @@ export class UserService extends BaseService<User> {
     return super.create(doc)
   }
 
-  async update (userData: UserUpdate): Promise<User> {
+  async save (userData: UserUpdate): Promise<User> {
     const updatedoc:any = { ...userData }
     if (userData.password) {
       const { hash, salt } = saltAndHash(userData.password)
       updatedoc.password = hash
       updatedoc.salt = salt
     }
-    return super.update(updatedoc)
+    return super.save(updatedoc)
   }
 
   async checkLogin (email: string, password: string) {
     const userData = await mongo.db.collection('users').findOne({ email })
-    if (userData?.password && userData?.salt && checkSaltedHash(password, userData.password, userData.salt)) return this.process(userData)
+    if (userData?.password && userData?.salt && checkSaltedHash(password, userData.password, userData.salt)) {
+      return userData._id.toString()
+    }
   }
 }
 

@@ -1,7 +1,17 @@
 import { KnownByService } from './baseservice'
-import { CharacterUpdate, Character, CharacterDetails, CharacterFilters } from '../models'
+import { CharacterUpdate, Character, CharacterDetails, CharacterFilters, Adventure } from '../models'
 import { ObjectId } from 'mongodb'
-// import { DataLoaderFactory } from 'dataloader-factory'
+import { DataLoaderFactory } from 'dataloader-factory'
+import { UnauthenticatedError } from '../lib'
+import { AdventureService } from './adventureservice'
+
+DataLoaderFactory.registerOneToMany<ObjectId, Character>('characterByPlayerId', {
+  fetch: async (ids, filters) => {
+    return CharacterService.find({ ...filters, gamemasters: ids })
+  },
+  extractKey: character => character.player,
+  idLoaderKey: 'characters'
+})
 
 export class CharacterService extends KnownByService<Character> {
   static get dlname () { return 'characters' }
@@ -9,20 +19,30 @@ export class CharacterService extends KnownByService<Character> {
 
   async translatefilters (filter: CharacterFilters) {
     const ret = await super.translatefilters(filter)
-    if (filter.mayLoginAs) ret.player = this.ctx.user
     return ret
   }
 
-  async getByDmId (id: ObjectId) {
-    return this.ctx.dataLoaderFactory.getOneToMany<ObjectId, Character>('adventureByDmId').load(id)
+  async mayLoginAs (adventureId?: ObjectId) {
+    if (!this.ctx.user) throw new UnauthenticatedError()
+
+    const [myCharacters, myAdventures] = await Promise.all<Character[], Adventure[]>([
+      CharacterService.find({ player: this.ctx.user, ...(adventureId ? { adventure: adventureId } : {}) }),
+      AdventureService.find({ gamemaster: this.ctx.user, ...(adventureId ? { _id: adventureId } : {}) })
+    ])
+    const moreCharacters = await CharacterService.find<Character>({ adventure: { $in: myAdventures.map(a => a.id) } })
+    return [...myCharacters, ...moreCharacters]
+  }
+
+  async getByPlayerId (id: ObjectId, filters?: CharacterFilters) {
+    return this.getOneToMany('characterByPlayerId', id, filters)
   }
 
   async create (info: CharacterDetails) {
-    return super.create(info)
+    return super.create({ ...info, knownby: this.ctx.character ? [this.ctx.character] : [] })
   }
 
-  async update (info: CharacterUpdate): Promise<Character> {
-    return super.update(info)
+  async save (info: CharacterUpdate): Promise<Character> {
+    return super.save(info)
   }
 }
 

@@ -1,4 +1,4 @@
-import { ObjectType, InputType, Field, Resolver, FieldResolver, Root, Ctx, Query, Mutation, Arg } from 'type-graphql'
+import { ObjectType, InputType, Field, Resolver, FieldResolver, Root, Ctx, Query, Mutation, Arg, UnauthorizedError } from 'type-graphql'
 import { withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
 import { Context } from '../lib'
 import { Character } from './character'
@@ -71,7 +71,7 @@ export class UserResolver {
 
   @FieldResolver(returns => [Adventure])
   async dmForAdventures (@Root() user: User, @Ctx() ctx: Context) {
-    return ctx.adventureService.getByDmId(user.id)
+    return ctx.adventureService.getByGmId(user.id)
   }
 
   @Mutation(returns => User)
@@ -81,14 +81,41 @@ export class UserResolver {
 
   @Mutation(returns => User)
   async updateUser (@Arg('info') userData: UserUpdate, @Ctx() ctx: Context) {
-    return ctx.userService.update(userData)
+    return ctx.userService.save(userData)
   }
 
-  @Mutation(returns => JWT)
+  @Query(returns => JWT)
   async login (@Arg('email') email: string, @Arg('password') password: string, @Ctx() ctx: Context) {
-    const user = await ctx.userService.checkLogin(email, password)
-    if (!user) throw new ApolloError('Email and password could not be verified.', 'AUTHENTICATION_FAILURE')
-    const token = ctx.getToken({ user: user.id })
+    const userid = await ctx.userService.checkLogin(email, password)
+    if (!userid) throw new ApolloError('Email and password could not be verified.', 'AUTHENTICATION_FAILURE')
+    const token = ctx.getToken({ user: userid })
+    return { token }
+  }
+
+  @Query(returns => JWT, {
+    description: 'Log in as a specific character. Must already be logged in as a user.'
+  })
+  async loginAsCharacter (
+    @Ctx() ctx: Context,
+    @Arg('character') characterId: ObjectId
+  ) {
+    const characters = await ctx.characterService.mayLoginAs()
+    const character = characters.find(c => c.id.equals(characterId.toHexString()))
+    if (!character) throw new UnauthorizedError()
+    const token = ctx.getToken({ user: ctx.user!, adventure: character.adventure, character: character.id })
+    return { token }
+  }
+
+  @Query(returns => JWT, {
+    description: 'Log in to an adventure as the GM. Must already be logged in as a user.'
+  })
+  async loginAsGM (
+    @Ctx() ctx: Context,
+    @Arg('adventure') adventureId: ObjectId
+  ) {
+    const permission = await ctx.adventureService.mayLoginAsGM(adventureId)
+    if (!permission) throw new UnauthorizedError()
+    const token = ctx.getToken({ user: ctx.user!, adventure: adventureId })
     return { token }
   }
 }

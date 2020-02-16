@@ -2,7 +2,6 @@ import 'reflect-metadata'
 import { install } from 'source-map-support'
 import { ApolloServer } from 'apollo-server'
 import { buildSchema } from 'type-graphql'
-import { DataLoaderFactory } from 'dataloader-factory'
 import { CharacterResolver, UserResolver, AdventureResolver } from './models'
 import { Context, ObjectIdScalar } from './lib'
 import { startServices } from './services'
@@ -20,7 +19,7 @@ async function main () {
   const server = new ApolloServer({
     schema,
     context: ({ req }) => {
-      return new Context(req.headers.authorization, new DataLoaderFactory())
+      return new Context(req.headers.authorization)
     }
   })
 

@@ -8,19 +8,21 @@ export class Context {
   public adventure?: ObjectId
   public user?: ObjectId
   public character?: ObjectId
-  public dataLoaderFactory: DataLoaderFactory
+  public superadmin: boolean
+  public dataLoaderFactory: DataLoaderFactory<Context>
   private adventureServiceInstance?: AdventureService
   private userServiceInstance?: UserService
   private characterServiceInstance?: CharacterService
 
-  constructor (authHeader: string | undefined, dataLoaderFactory: DataLoaderFactory) {
-    this.dataLoaderFactory = dataLoaderFactory
+  constructor (authHeader: string | undefined) {
+    this.dataLoaderFactory = new DataLoaderFactory(this)
     const m = authHeader?.match(/^bearer (.*)$/i)
     const token = m?.[1]
     const payload: any = token ? jwt.verify(token, this.jwtSecret) : {}
     this.adventure = payload.adventure
     this.user = payload.user
     this.character = payload.character
+    this.superadmin = payload.superadmin || false
   }
 
   get adventureService () {
