@@ -17,11 +17,6 @@ export class CharacterService extends KnownByService<Character> {
   static get dlname () { return 'characters' }
   static get ModelClass () { return Character }
 
-  async translatefilters (filter: CharacterFilters) {
-    const ret = await super.translatefilters(filter)
-    return ret
-  }
-
   async mayLoginAs (adventureId?: ObjectId) {
     if (!this.ctx.user) throw new UnauthenticatedError()
 

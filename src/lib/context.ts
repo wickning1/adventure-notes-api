@@ -19,9 +19,9 @@ export class Context {
     const m = authHeader?.match(/^bearer (.*)$/i)
     const token = m?.[1]
     const payload: any = token ? jwt.verify(token, this.jwtSecret) : {}
-    this.adventure = payload.adventure
-    this.user = payload.user
-    this.character = payload.character
+    this.adventure = payload.adventure ? new ObjectId(payload.adventure) : undefined
+    this.user = payload.user ? new ObjectId(payload.user) : undefined
+    this.character = payload.character ? new ObjectId(payload.character) : undefined
     this.superadmin = payload.superadmin || false
   }
 

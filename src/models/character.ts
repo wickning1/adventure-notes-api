@@ -1,9 +1,9 @@
 import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg, Mutation } from 'type-graphql'
+import { ObjectId } from 'mongodb'
 import { Context } from '../lib'
 import { Alignment, AlignmentDetails } from '../nested'
 import { User } from '.'
 import { withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput } from '../mixins'
-import { ObjectId } from 'mongodb'
 
 @ObjectType({ isAbstract: true })
 @InputType({ isAbstract: true })

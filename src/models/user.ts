@@ -1,10 +1,9 @@
 import { ObjectType, InputType, Field, Resolver, FieldResolver, Root, Ctx, Query, Mutation, Arg, UnauthorizedError } from 'type-graphql'
-import { withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
-import { Context } from '../lib'
-import { Character } from './character'
 import { ApolloError } from 'apollo-server'
 import { ObjectId } from 'mongodb'
-import { Adventure } from './adventure'
+import { withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
+import { Context } from '../lib'
+import { Adventure, Character } from '.'
 
 @ObjectType({ isAbstract: true })
 @InputType({ isAbstract: true })

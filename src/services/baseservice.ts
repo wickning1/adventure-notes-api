@@ -36,24 +36,24 @@ export class BaseService<T> {
     return this.toModel<T>(await mongo.db.collection(this.dlname).find(filter).toArray())
   }
 
-  static toModel<T> (items: any[]): T[]
-  static toModel<T> (items: any): T | undefined
-  static toModel (items: any): any {
+  protected static toModel<T> (items: any[]): T[]
+  protected static toModel<T> (items: any): T | undefined
+  protected static toModel (items: any): any {
     return toClass(items, this.ModelClass)
   }
 
-  async cleanse (item: T): Promise<T|undefined> {
+  protected async cleanse (item: T): Promise<T|undefined> {
     // to be implemented by subclasses
     return item
   }
 
-  static async authfilters (ctx: Context, authfilterarray: any[] = []) {
+  protected static async authfilters (ctx: Context, authfilterarray: any[] = []) {
     if (!ctx.user) throw new UnauthenticatedError()
     if (ctx.superadmin || !authfilterarray.length) return {}
     else return { $and: authfilterarray }
   }
 
-  async translatefilters (graphqlfilter: any = {}) {
+  protected async translatefilters (graphqlfilter: any = {}) {
     // to be further implemented by subclasses
     const mongofilter: any = {}
     if (graphqlfilter.ids) {
@@ -63,9 +63,9 @@ export class BaseService<T> {
     return { ...mongofilter, ...authfilters }
   }
 
-  async process (items: any[]): Promise<T[]>
-  async process (items: any): Promise<T | undefined>
-  async process (items: any): Promise<any> {
+  protected async process (items: any[]): Promise<T[]>
+  protected async process (items: any): Promise<T | undefined>
+  protected async process (items: any): Promise<any> {
     const models = (this.constructor as typeof BaseService).toModel<T>(toArray(items))
     const ret = (await Promise.all(models.map(this.cleanse.bind(this)))).filter(Boolean)
     if (Array.isArray(items)) return ret
@@ -137,17 +137,27 @@ export class BaseService<T> {
 
 export class BelongsToAdventureService<T extends { adventure: ObjectId }> extends BaseService<T> {
   static onStartup (callback?: () => Promise<void>) {
+    DataLoaderFactory.registerOneToMany(this.dlname + 'ByAdventureId', {
+      fetch: async (adventureIds, filter) => {
+        return mongo.db.collection(this.dlname).find({ ...filter, adventure: { $in: adventureIds } }).toArray()
+      },
+      extractKey: item => item.adventure
+    })
     super.onStartup(callback)
     startups.push(async () => {
       await this.createIndex('adventure')
     })
   }
 
-  static async authfilters (ctx: Context, authfilterarray: any[] = []) {
+  protected static async authfilters (ctx: Context, authfilterarray: any[] = []) {
     if (!ctx.adventure) throw new AdventureNotChosenError()
     const authfilter: any = { adventure: ctx.adventure }
     authfilterarray.push(authfilter)
     return super.authfilters(ctx, authfilterarray)
+  }
+
+  async getByAdventureId (adventureId: ObjectId, graphqlfilter: any) {
+    return this.getOneToMany(this.dlname + 'ByAdventureId', adventureId, graphqlfilter)
   }
 
   async create (info: any) {
@@ -164,10 +174,10 @@ export class KnownByService<T extends { knownby: ObjectId[], adventure: ObjectId
     })
   }
 
-  static async authfilters (ctx: Context, authfilterarray: any[] = []) {
+  protected static async authfilters (ctx: Context, authfilterarray: any[] = []) {
     const authfilter: any = {}
     if (ctx.character) authfilter.knownby = ctx.character
-    authfilterarray.push(authfilter)
+    if (Object.keys(authfilter).length) authfilterarray.push(authfilter)
     return super.authfilters(ctx, authfilterarray)
   }
 

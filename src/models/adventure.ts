@@ -1,8 +1,9 @@
 import { ObjectType, Field, Int, Resolver, Query, Arg, FieldResolver, InputType, Mutation, Ctx, Root } from 'type-graphql'
+import { ObjectId } from 'mongodb'
 import { ObjectIdScalar, Context } from '../lib'
 import { Character, User } from '.'
 import { withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
-import { ObjectId } from 'mongodb'
+import { CharacterFilters } from './character'
 
 @ObjectType({ isAbstract: true })
 @InputType()
@@ -54,8 +55,8 @@ export class AdventureResolver {
 
   /** Foreign References **/
   @FieldResolver(returns => [Character])
-  async characters (): Promise<Character[]> {
-    return []
+  async characters (@Root() adventure: Adventure, @Ctx() ctx: Context, @Arg('filter', { nullable: true }) filter?: CharacterFilters): Promise<Character[]> {
+    return ctx.characterService.getByAdventureId(adventure.id, filter)
   }
 
   @Mutation(returns => Adventure)

@@ -9,7 +9,7 @@ export class UserService extends BaseService<User> {
   static get ModelClass () { return User }
 
   async cleanse (item: User) {
-    if (item.id !== this.ctx.user) delete item.email
+    if (!item.id.equals(this.ctx.user!)) delete item.email
     return super.cleanse(item)
   }
 

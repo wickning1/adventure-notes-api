@@ -8,10 +8,10 @@ export function withKnownBy<T extends ClassType> (NextMixinClass: T) {
   @ObjectType({ isAbstract: true })
   @InputType({ isAbstract: true })
   class KnownByTrait extends NextMixinClass {
-    @Field(type => [Character])
+    @Field(type => [ObjectIdScalar])
     knownby!: ObjectId[]
 
-    @Field(type => Adventure)
+    @Field()
     adventure!: ObjectId
   }
   return KnownByTrait
@@ -26,8 +26,8 @@ export function withKnownByResolver<T extends ClassType, M extends ClassType> (O
     }
 
     @FieldResolver(returns => Adventure)
-    async adventure (@Root() character: Character, @Ctx() ctx: Context) {
-      return new Adventure() // TODO
+    async adventure (@Root() item: any, @Ctx() ctx: Context) {
+      return ctx.adventureService.get(item.adventure)
     }
   }
   return KnownByResolver
