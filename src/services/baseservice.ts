@@ -32,7 +32,7 @@ export class BaseService<T> {
     if (callback) startups.push(callback)
   }
 
-  public static async find<T> (filter: any = {}) {
+  public static async find<T = any> (filter: any = {}) {
     return this.toModel<T>(await mongo.db.collection(this.dlname).find(filter).toArray())
   }
 

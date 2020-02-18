@@ -14,17 +14,14 @@ export class CharacterDetails {
   @Field(type => [String])
   aliases!: string[]
 
-  @Field()
-  player!: ObjectId
+  @Field({ nullable: true })
+  player?: ObjectId
 }
 
 @ObjectType()
 export class Character extends withKnownBy(withId(CharacterDetails)) {
   @Field()
   alignment!: Alignment
-
-  @Field(type => User)
-  player!: ObjectId
 }
 
 @InputType()
@@ -52,6 +49,9 @@ export class CharacterUpdate extends BaseUpdateInput {
 export class CharacterFilters extends KnownByFilterInput {
   @Field({ nullable: true, description: 'When true, query only returns characters for which the user is permitted to use the "Point of View" feature.' })
   mayLoginAs?: boolean
+
+  @Field({ nullable: true, description: 'When true, only return characters that have a player. When false, only return NPCs.' })
+  isPlayerCharacter?: boolean
 }
 
 @Resolver(of => Character)

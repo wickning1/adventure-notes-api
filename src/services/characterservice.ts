@@ -6,11 +6,11 @@ import { DataLoaderFactory } from 'dataloader-factory'
 import { UnauthenticatedError } from '../lib'
 import { AdventureService } from './adventureservice'
 
-DataLoaderFactory.registerOneToMany<ObjectId, Character>('characterByPlayerId', {
+DataLoaderFactory.registerOneToMany<ObjectId, Character>('charactersByPlayerId', {
   fetch: async (ids, filters) => {
-    return CharacterService.find({ ...filters, gamemasters: ids })
+    return CharacterService.find({ ...filters, player: { $in: ids } })
   },
-  extractKey: character => character.player,
+  extractKey: character => character.player!,
   idLoaderKey: 'characters'
 })
 
@@ -21,7 +21,12 @@ export class CharacterService extends KnownByService<Character> {
   async translatefilters (filter: CharacterFilters) {
     const charIds = (await this.mayLoginAs(this.ctx.adventure)).map(c => c.id)
     if (filter.ids?.length) filter.ids = lodash.intersectionBy(filter.ids, charIds, id => id.toHexString())
-    return super.translatefilters(filter)
+    const ret = await super.translatefilters(filter)
+
+    if (filter.isPlayerCharacter) ret.player = { $ne: null }
+    else if (filter.isPlayerCharacter === false) ret.player = null
+
+    return ret
   }
 
   async mayLoginAs (adventureId?: ObjectId) {
@@ -36,7 +41,7 @@ export class CharacterService extends KnownByService<Character> {
   }
 
   async getByPlayerId (id: ObjectId, filters?: CharacterFilters) {
-    return this.getOneToMany('characterByPlayerId', id, filters)
+    return this.getOneToMany('charactersByPlayerId', id, filters)
   }
 
   async create (info: CharacterDetails) {

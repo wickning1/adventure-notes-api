@@ -65,7 +65,7 @@ export class UserResolver {
 
   @FieldResolver(returns => [Character])
   async characters (@Root() user: User, @Ctx() ctx: Context): Promise<Character[]> {
-    return []
+    return ctx.characterService.getByPlayerId(user.id)
   }
 
   @FieldResolver(returns => [Adventure])
