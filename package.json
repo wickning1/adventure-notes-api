@@ -4,7 +4,7 @@
   "description": "An API for storing player and DM notes related to a role playing campaign.",
   "main": "main.js",
   "scripts": {
-    "compile": "tsc",
+    "compile": "rm -rf dist/* && tsc",
     "nodemon": "nodemon",
     "start-dev": "node --inspect=0.0.0.0:9229 dist/main.js",
     "start-prod": "node dist/main.js",
@@ -35,7 +35,8 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "4.0.1",
     "nodemon": "^2.0.2",
-    "typescript": "^3.7.5"
+    "typescript": "^3.7.5",
+    "utility-types": "^3.10.0"
   },
   "repository": {
     "type": "git",

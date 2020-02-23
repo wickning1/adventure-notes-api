@@ -1,10 +1,9 @@
-import { KnownByService } from './baseservice'
-import { CharacterUpdate, Character, CharacterDetails, CharacterFilters, Adventure } from '../models'
-import { ObjectId } from 'mongodb'
-import lodash from 'lodash'
 import { DataLoaderFactory } from 'dataloader-factory'
+import { ObjectId } from 'mongodb'
+import { Character, CharacterFilters, Adventure } from '../models'
 import { UnauthenticatedError } from '../lib'
-import { AdventureService } from './adventureservice'
+import { BaseService, AdventureService } from '.'
+import { KnownByServiceHelper, KnownByService } from '../mixins'
 
 DataLoaderFactory.registerOneToMany<ObjectId, Character>('charactersByPlayerId', {
   fetch: async (ids, filters) => {
@@ -14,17 +13,22 @@ DataLoaderFactory.registerOneToMany<ObjectId, Character>('charactersByPlayerId',
   idLoaderKey: 'characters'
 })
 
-export class CharacterService extends KnownByService<Character> {
+export class CharacterService extends BaseService<Character> {
   static get dlname () { return 'characters' }
   static get ModelClass () { return Character }
 
-  async translatefilters (filter: CharacterFilters) {
-    const charIds = (await this.mayLoginAs(this.ctx.adventure)).map(c => c.id)
-    if (filter.ids?.length) filter.ids = lodash.intersectionBy(filter.ids, charIds, id => id.toHexString())
-    const ret = await super.translatefilters(filter)
+  private knownByService = new KnownByService(this)
 
-    if (filter.isPlayerCharacter) ret.player = { $ne: null }
-    else if (filter.isPlayerCharacter === false) ret.player = null
+  async translatefilters (filter: CharacterFilters) {
+    const ret = await super.filters(filter)
+
+    if (filter.mayLoginAs) {
+      const charIds = (await this.mayLoginAs(this.ctx.adventure)).map(c => c.id)
+      ret.push({ _id: { $in: charIds } })
+    }
+
+    if (filter.isPlayerCharacter) ret.push({ player: { $ne: null } })
+    else if (filter.isPlayerCharacter === false) ret.push({ player: null })
 
     return ret
   }
@@ -44,14 +48,16 @@ export class CharacterService extends KnownByService<Character> {
     return this.getOneToMany('charactersByPlayerId', id, filters)
   }
 
-  async create (info: CharacterDetails) {
-    return super.create({ ...info, knownby: this.ctx.character ? [this.ctx.character] : [] })
+  async getByAdventureId (adventureId: ObjectId, graphqlfilter: any) {
+    return this.knownByService.getByAdventureId(adventureId, graphqlfilter)
   }
 
-  async save (info: CharacterUpdate): Promise<Character> {
-    return super.save(info)
+  async addKnownBy (ids: ObjectId[], characterIds: ObjectId[]) {
+    return this.knownByService.addKnownBy(ids, characterIds)
   }
 }
+
+CharacterService.setHelpers(KnownByServiceHelper)
 
 CharacterService.onStartup(async () => {
   await CharacterService.createIndex('name', { unique: true })

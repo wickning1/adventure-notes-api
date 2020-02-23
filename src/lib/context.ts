@@ -1,8 +1,10 @@
 import { DataLoaderFactory } from 'dataloader-factory'
 import { UserService, AdventureService } from '../services'
 import jwt from 'jsonwebtoken'
+import lodash from 'lodash'
 import { ObjectId } from 'mongodb'
 import { CharacterService } from '../services/characterservice'
+import { Character, Adventure } from '../models'
 
 export class Context {
   public adventure?: ObjectId
@@ -13,6 +15,7 @@ export class Context {
   private adventureServiceInstance?: AdventureService
   private userServiceInstance?: UserService
   private characterServiceInstance?: CharacterService
+  private cache:any = {}
 
   constructor (authHeader: string | undefined) {
     this.dataLoaderFactory = new DataLoaderFactory(this)
@@ -38,6 +41,56 @@ export class Context {
   get characterService () {
     if (!this.characterServiceInstance) this.characterServiceInstance = new CharacterService(this)
     return this.characterServiceInstance
+  }
+
+  async getCharacter () {
+    if (!this.cache.character) this.cache.character = (await CharacterService.find({ _id: this.character }))?.[0]
+    return this.cache.character as Character | undefined
+  }
+
+  async getAdventure () {
+    if (!this.cache.adventure) this.cache.adventure = (await AdventureService.find({ _id: this.adventure }))?.[0]
+    return this.cache.adventure as Adventure | undefined
+  }
+
+  async getCharacters () {
+    if (!this.cache.characters) this.cache.characters = (await CharacterService.find({ player: this.user }))
+    return this.cache.characters as Character[]
+  }
+
+  async getGMAdventures () {
+    if (!this.cache.gmadventures) this.cache.gmadventures = (await AdventureService.find({ gamemaster: this.user }))
+    return this.cache.gmadventures as Adventure[]
+  }
+
+  async getAdventures () {
+    if (!this.cache.adventures) {
+      const [characters, gmadventures] = await Promise.all([
+        this.getCharacters(),
+        this.getGMAdventures()
+      ])
+      const moreadventureids = lodash.differenceBy(characters.map(c => c.adventure), gmadventures.map(a => a.id), id => id.toHexString)
+      const moreadventures = await AdventureService.find({ _id: { $in: moreadventureids } })
+      this.cache.adventures = [...gmadventures, ...moreadventures]
+    }
+    return this.cache.adventures as Adventure[]
+  }
+
+  async getFriends () {
+    if (!this.cache.friends) {
+      if (this.adventure) {
+        const [adventure, otherpcs] = await Promise.all([
+          this.getAdventure(),
+          CharacterService.find<Character>({ player: { $ne: null }, adventure: this.adventure })
+        ])
+        this.cache.friends = [adventure!.gamemaster, ...otherpcs!.map(c => c.player)]
+      } else {
+        const adventures = await this.getAdventures()
+        const otherpcs = await CharacterService.find({ player: { $nin: [this.user, null] }, adventure: { $in: adventures.map(a => a.id) } })
+        this.cache.friends = [...adventures.map(a => a.gamemaster), ...otherpcs.map(c => c.player)]
+      }
+    }
+    return this.cache.friends as ObjectId[]
   }
 
   private get jwtSecret () {

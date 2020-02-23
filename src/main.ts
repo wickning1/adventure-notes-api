@@ -1,13 +1,12 @@
-import 'reflect-metadata'
+/* eslint-disable import/first */
 import { install } from 'source-map-support'
+install()
+import 'reflect-metadata'
 import { ApolloServer } from 'apollo-server'
 import { buildSchema } from 'type-graphql'
+import { Context, ObjectIdScalar, startup } from './lib'
 import { CharacterResolver, UserResolver, AdventureResolver } from './models'
-import { Context, ObjectIdScalar } from './lib'
-import { startServices } from './services'
 import { ObjectId } from 'mongodb'
-
-install()
 
 async function main () {
   const schema = await buildSchema({
@@ -24,7 +23,7 @@ async function main () {
   })
 
   // Start the server
-  await startServices()
+  await startup.start()
   const { url } = await server.listen(80)
   console.log(`Server is running, GraphQL Playground available at ${url}`)
 }

@@ -1,9 +1,8 @@
 import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg, Mutation } from 'type-graphql'
 import { ObjectId } from 'mongodb'
 import { Context } from '../lib'
-import { Alignment, AlignmentDetails } from '../nested'
 import { User } from '.'
-import { withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput } from '../mixins'
+import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput, withMandatoryAlignment } from '../mixins'
 
 @ObjectType({ isAbstract: true })
 @InputType({ isAbstract: true })
@@ -19,27 +18,22 @@ export class CharacterDetails {
 }
 
 @ObjectType()
-export class Character extends withKnownBy(withId(CharacterDetails)) {
-  @Field()
-  alignment!: Alignment
+export class Character extends withAlignment(withKnownBy(withId(CharacterDetails))) {
+
 }
 
 @InputType()
-export class CharacterCreate extends CharacterDetails {
-  @Field({ nullable: true })
-  alignment!: AlignmentDetails
+export class CharacterCreate extends withMandatoryAlignment(CharacterDetails) {
+
 }
 
 @InputType()
-export class CharacterUpdate extends BaseUpdateInput {
+export class CharacterUpdate extends withAlignment(BaseUpdateInput) {
   @Field({ nullable: true })
   name?: string
 
   @Field(type => [String], { nullable: true })
   aliases?: string[]
-
-  @Field({ nullable: true })
-  alignment?: AlignmentDetails
 
   @Field({ nullable: true })
   player?: ObjectId

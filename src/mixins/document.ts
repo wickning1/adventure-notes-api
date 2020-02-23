@@ -6,6 +6,8 @@ export function withId<T extends ClassType> (NextMixinClass: T) {
   @ObjectType({ isAbstract: true })
   @InputType({ isAbstract: true })
   class IDTrait extends NextMixinClass {
+    _id!: ObjectId
+
     @Field()
     get id (): ObjectId { return this._id }
 

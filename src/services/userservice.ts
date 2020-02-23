@@ -1,12 +1,19 @@
-import { mongo, saltAndHash, checkSaltedHash } from '../lib'
+import { mongo, saltAndHash, checkSaltedHash, Context } from '../lib'
 import { BaseService } from '.'
-// import { DataLoaderFactory } from 'dataloader-factory'
 import { User, UserInput, UserUpdate } from '../models'
 import { UserInputError } from 'apollo-server'
 
 export class UserService extends BaseService<User> {
   static get dlname () { return 'users' }
   static get ModelClass () { return User }
+
+  static async authfilters (ctx: Context) {
+    const ret = await super.authfilters(ctx)
+    // in order to see a user, you must share an adventure with them
+    const userIds = await ctx.getFriends()
+    ret.push({ _id: { $in: userIds } })
+    return ret
+  }
 
   async cleanse (item: User) {
     if (!item.id.equals(this.ctx.user!)) delete item.email
@@ -20,7 +27,7 @@ export class UserService extends BaseService<User> {
     return super.create(doc)
   }
 
-  async save (userData: UserUpdate): Promise<User> {
+  async save (userData: UserUpdate) {
     const updatedoc:any = { ...userData }
     if (userData.password) {
       const { hash, salt } = saltAndHash(userData.password)

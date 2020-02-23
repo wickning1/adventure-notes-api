@@ -31,3 +31,8 @@ export function checkSaltedHash (secret: string, hash: string, salt: string) {
   hasher.write(secret + salt)
   return hasher.digest('base64') === hash
 }
+
+export function andFilters (filters:any[]) {
+  if (filters?.length) return { $and: filters }
+  return {}
+}

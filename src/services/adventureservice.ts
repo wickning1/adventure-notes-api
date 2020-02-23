@@ -18,21 +18,22 @@ export class AdventureService extends BaseService<Adventure> {
   static get ModelClass () { return Adventure }
 
   static async authfilters (ctx: Context) {
+    const ret = await super.authfilters(ctx)
     // in order to see an adventure, you need to have a character in the adventure
     // or be the gamemaster
-    const characters = await ctx.characterService.getByPlayerId(ctx.user!)
-    const mongofilter = {
+    const characters = await ctx.getCharacters()
+    ret.push({
       $or: [
         { gamemaster: ctx.user },
         { _id: characters.map(c => c.adventure) }
       ]
-    }
-    return super.authfilters(ctx, [mongofilter])
+    })
+    return ret
   }
 
-  async translatefilters (filter: AdventureFilter) {
-    const ret = await super.translatefilters(filter)
-    if (filter.gamemasters) ret.gamemaster = { $in: filter.gamemasters }
+  async filters (filter: AdventureFilter) {
+    const ret = await super.filters(filter)
+    if (filter.gamemasters) ret.push({ gamemaster: { $in: filter.gamemasters } })
     return ret
   }
 
