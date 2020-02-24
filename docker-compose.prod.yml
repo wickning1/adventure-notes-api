@@ -3,6 +3,8 @@ services:
   adventure-notes-api:
     build:
       context: .
+    environment:
+      JWT_SECRET: supersecret
     ports:
       - 4000:80
   adventure-notes-db:

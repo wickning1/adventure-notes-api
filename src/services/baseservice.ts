@@ -147,8 +147,8 @@ export abstract class BaseService<T extends BasicModel = any> {
     const actualitem = this.toModel(item)
     for (const helper of this.mixinHelpersWithPresave) await helper.presave(actualitem)
     const updatedoc = { ...actualitem, _version: 0 }
-    const insertId = (await mongo.db.collection(this.dlname).insertOne(updatedoc)).insertedId
-    return this.get(insertId)
+    actualitem._id = (await mongo.db.collection(this.dlname).insertOne(updatedoc)).insertedId
+    return actualitem
   }
 
   async save (info: any) {

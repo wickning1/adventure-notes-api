@@ -1,0 +1,21 @@
+version: '3'
+services:
+  adventure-notes-api:
+    build:
+      context: .
+    depends_on:
+      - adventure-notes-db
+    environment:
+      JWT_SECRET: supersecret
+  adventure-notes-db:
+    image: mongo:latest
+    command: --logpath /dev/null
+    volumes:
+      - adventure-notes-db-test:/data/db
+  adventure-notes-test:
+    build:
+      context: test
+    depends_on:
+      - adventure-notes-api
+volumes:
+  adventure-notes-db-test: {}

@@ -1,7 +1,7 @@
 import { ClassType, InputType, ObjectType, FieldResolver, Root, Field, Resolver, Ctx } from 'type-graphql'
 import { Character, Adventure } from '../models'
 import { ObjectId } from 'mongodb'
-import { Context, ObjectIdScalar } from '../lib'
+import { Context, ObjectIdScalar, UnauthenticatedError } from '../lib'
 import { BaseFilterInput } from './document'
 import { DataLoaderFactory } from 'dataloader-factory'
 import { BaseService, BaseServiceMixin, ServiceMixinHelper, BasicModel } from '../services'
@@ -111,6 +111,7 @@ export class KnownByServiceHelper extends ServiceMixinHelper {
   }
 
   async presave (item: any) {
+    if (!this.ctx.user) throw new UnauthenticatedError()
     if (!item.adventure) item.adventure = this.ctx.adventure
     if (!item.adventure) throw new ValidationError('Cannot create new records when not logged in to an adventure.')
     if (!item.knownby) item.knownby = []
