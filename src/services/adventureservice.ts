@@ -7,7 +7,7 @@ import { ForbiddenError } from 'type-graphql'
 
 DataLoaderFactory.registerOneToMany<ObjectId, Adventure>('adventureByDmId', {
   fetch: async (ids, filters) => {
-    return AdventureService.find({ ...filters, gamemasters: ids })
+    return AdventureService.find({ ...filters, gamemaster: { $in: ids } })
   },
   extractKey: adventure => adventure.gamemaster,
   idLoaderKey: 'adventures'
@@ -25,7 +25,7 @@ export class AdventureService extends BaseService<Adventure> {
     ret.push({
       $or: [
         { gamemaster: ctx.user },
-        { _id: characters.map(c => c.adventure) }
+        { _id: { $in: characters.map(c => c.adventure) } }
       ]
     })
     return ret

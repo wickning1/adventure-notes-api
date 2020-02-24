@@ -10,21 +10,26 @@ export class CharacterDetails {
   @Field()
   name!: string
 
-  @Field(type => [String])
-  aliases!: string[]
-
   @Field({ nullable: true })
   player?: ObjectId
 }
 
 @ObjectType()
 export class Character extends withAlignment(withKnownBy(withId(CharacterDetails))) {
+  @Field(type => [String])
+  aliases!: string[]
 
+  @Field({ nullable: true })
+  invitation?: string
 }
 
 @InputType()
 export class CharacterCreate extends withMandatoryAlignment(CharacterDetails) {
+  @Field({ nullable: true })
+  playerEmail?: string
 
+  @Field(type => [String], { nullable: true })
+  aliases?: string[]
 }
 
 @InputType()
@@ -36,7 +41,7 @@ export class CharacterUpdate extends withAlignment(BaseUpdateInput) {
   aliases?: string[]
 
   @Field({ nullable: true })
-  player?: ObjectId
+  playerEmail?: string
 }
 
 @InputType()

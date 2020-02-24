@@ -33,6 +33,11 @@ export function checkSaltedHash (secret: string, hash: string, salt: string) {
 }
 
 export function andFilters (filters:any[]) {
-  if (filters?.length) return { $and: filters }
+  if (filters?.length > 1) return { $and: filters }
+  if (filters?.length) return filters[0]
   return {}
+}
+
+export function randomString () {
+  return crypto.randomBytes(16).toString('hex')
 }

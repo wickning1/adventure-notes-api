@@ -45,7 +45,6 @@ export abstract class BaseService<T extends BasicModel = any> {
     DataLoaderFactory.register(this.dlname, {
       fetch: async (ids: ObjectId[], ctx: Context) => {
         const authfilters = await this.authfilters(ctx)
-        console.log(this.dlname, authfilters)
         return this.find({ ...andFilters(authfilters), _id: { $in: ids } })
       }
     })

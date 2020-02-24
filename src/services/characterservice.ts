@@ -1,9 +1,10 @@
 import { DataLoaderFactory } from 'dataloader-factory'
 import { ObjectId } from 'mongodb'
-import { Character, CharacterFilters, Adventure } from '../models'
-import { UnauthenticatedError } from '../lib'
+import { Character, CharacterFilters, Adventure, CharacterCreate, User, CharacterUpdate } from '../models'
+import { UnauthenticatedError, randomString } from '../lib'
 import { BaseService, AdventureService } from '.'
 import { KnownByServiceHelper, KnownByService } from '../mixins'
+import { UserService } from './userservice'
 
 DataLoaderFactory.registerOneToMany<ObjectId, Character>('charactersByPlayerId', {
   fetch: async (ids, filters) => {
@@ -46,6 +47,30 @@ export class CharacterService extends BaseService<Character> {
 
   async getByPlayerId (id: ObjectId, filters?: CharacterFilters) {
     return this.getOneToMany('charactersByPlayerId', id, filters)
+  }
+
+  async presave (info: any) {
+    if (info.playerEmail) {
+      info.player = undefined
+      const player = (await UserService.find<User>({ email: info.playerEmail }))[0]
+      if (player) {
+        delete info.playerEmail
+        info.player = player.id
+      } else {
+        info.invitation = randomString()
+      }
+    }
+  }
+
+  async create (info: CharacterCreate) {
+    await this.presave(info)
+    if (!info.aliases) info.aliases = []
+    return super.create(info)
+  }
+
+  async save (info: CharacterUpdate) {
+    await this.presave(info)
+    return super.save(info)
   }
 
   async getByAdventureId (adventureId: ObjectId, graphqlfilter: any) {
