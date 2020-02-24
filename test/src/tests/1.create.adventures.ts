@@ -17,7 +17,7 @@ mutation ($name:String!) {
 
 const LOG_IN_ADVENTURE = `
 query ($adventure:ObjectId!) {
-  loginAsGM(adventure:$adventure) {
+  loginToAdventure(adventure:$adventure) {
     token
   }
 }
@@ -27,7 +27,7 @@ async function createAdventure (userName: string, name: string) {
   const { createAdventure: adventure } = await gql.getClient(userName).request(CREATE_ADVENTURE, { name })
   expect(adventure.id).to.be.a('string')
   const result = await gql.getClient(userName).request(LOG_IN_ADVENTURE, { adventure: adventure.id })
-  const token = result.loginAsGM.token
+  const token = result.loginToAdventure.token
   expect(token).to.be.a('string')
   gql.storeToken(`${userName}_gm`, token)
   return adventure
