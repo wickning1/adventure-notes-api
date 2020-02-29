@@ -12,7 +12,7 @@
   },
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 2018,
+    "ecmaVersion": 2019,
     "sourceType": "module"
   },
   "plugins": [
@@ -35,7 +35,9 @@
           }
         ],
         // this rule is redundant when using typescript and improperly throws on method overloads
-        "no-dupe-class-members": "off"
+        "no-dupe-class-members": "off",
+        // this rule gets in the way when using chai-as-promised: expect().to.be.rejected
+        "no-unused-expressions": "off"
       }
     }
   ]

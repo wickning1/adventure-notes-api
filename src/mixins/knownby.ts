@@ -1,11 +1,12 @@
-import { ClassType, InputType, ObjectType, FieldResolver, Root, Field, Resolver, Ctx } from 'type-graphql'
+import { ClassType, InputType, ObjectType, FieldResolver, Root, Field, Resolver, Ctx, Info } from 'type-graphql'
 import { Character, Adventure } from '../models'
 import { ObjectId } from 'mongodb'
-import { Context, ObjectIdScalar, UnauthenticatedError } from '../lib'
+import { Context, ObjectIdScalar, UnauthenticatedError, onlyResolveId, toClass } from '../lib'
 import { BaseFilterInput } from './document'
 import { DataLoaderFactory } from 'dataloader-factory'
 import { BaseService, BaseServiceMixin, ServiceMixinHelper, BasicModel } from '../services'
 import { ValidationError } from 'apollo-server'
+import { GraphQLResolveInfo } from 'graphql'
 
 export function withKnownBy<T extends ClassType> (NextMixinClass: T) {
   @ObjectType({ isAbstract: true })
@@ -24,13 +25,14 @@ export function withKnownByResolver<T extends ClassType, M extends ClassType> (O
   @Resolver(of => ObjectClass, { isAbstract: true })
   abstract class KnownByResolver extends NextMixinClass {
     @FieldResolver(returns => [Character])
-    async knownby (@Root() obj: { knownby: ObjectId[] }, @Ctx() ctx: Context) {
-      return []
+    async knownby (@Root() obj: { knownby: ObjectId[] }, @Ctx() ctx: Context, @Info() info: GraphQLResolveInfo) {
+      return ctx.characterService.getMany(obj.knownby, info)
     }
 
     @FieldResolver(returns => Adventure)
-    async adventure (@Root() item: any, @Ctx() ctx: Context) {
-      return ctx.adventureService.get(item.adventure)
+    async adventure (@Root() item: any, @Ctx() ctx: Context, @Info() info: GraphQLResolveInfo) {
+      if (onlyResolveId(info)) return toClass({ _id: item.adventure }, Adventure)
+      return ctx.adventureService.get(item.adventure, info)
     }
   }
   return KnownByResolver
@@ -126,8 +128,8 @@ export class KnownByService<M extends BasicModel> extends BaseServiceMixin<M> {
     return this.service.getOneToMany(this.service.dlname + 'ByAdventureId', adventureId, graphqlfilter)
   }
 
-  async addKnownBy (ids: ObjectId[], characterIds: ObjectId[]) {
-    const cleanCharacterIds = await this.service.ctx.characterService.getMany(characterIds)
-    return this.service.updateMany({ $addToSet: { knownby: cleanCharacterIds.map(c => c.id) } }, { _id: { $in: ids } })
+  async addKnownBy (ids: ObjectId[], characterIds: ObjectId[], skipAuth?: boolean) {
+    const cleanCharacterIds = skipAuth ? (await this.service.ctx.characterService.getMany(characterIds)).map(c => c.id) : characterIds
+    return this.service.updateMany({ $addToSet: { knownby: { $each: cleanCharacterIds } } }, { _id: { $in: ids } })
   }
 }

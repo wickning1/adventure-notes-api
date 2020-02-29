@@ -65,7 +65,10 @@ export class CharacterService extends BaseService<Character> {
   async create (info: CharacterCreate) {
     await this.presave(info)
     if (!info.aliases) info.aliases = []
-    return super.create(info)
+    const newitem = await super.create(info)
+    await this.knownByService.addKnownBy([newitem.id], [newitem.id], true)
+    newitem.knownby = newitem.knownby?.length ? [...newitem.knownby, newitem.id] : [newitem.id]
+    return newitem
   }
 
   async save (info: CharacterUpdate) {

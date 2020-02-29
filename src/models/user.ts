@@ -113,7 +113,10 @@ export class UserResolver {
     @Arg('adventure') adventureId: ObjectId
   ) {
     const adventures = await ctx.getAdventures()
-    if (!adventures.some(a => a.id.equals(adventureId))) throw new UnauthorizedError()
+    if (!adventures.some(a => a.id.equals(adventureId))) {
+      console.log(adventures, adventureId)
+      throw new UnauthorizedError()
+    }
     const token = ctx.getToken({ user: ctx.user!, adventure: adventureId })
     return { token }
   }

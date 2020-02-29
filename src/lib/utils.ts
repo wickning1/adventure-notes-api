@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import { ClassType } from 'type-graphql'
+import { GraphQLResolveInfo } from 'graphql'
 
 export function toArray<ItemType> (items: ItemType | ItemType[]): ItemType[] {
   return Array.isArray(items) ? items : [items]
@@ -40,4 +41,9 @@ export function andFilters (filters:any[]) {
 
 export function randomString () {
   return crypto.randomBytes(16).toString('hex')
+}
+
+export function onlyResolveId (info?: GraphQLResolveInfo) {
+  const selections = info?.fieldNodes[0].selectionSet?.selections
+  return (selections?.length === 1 && info?.fieldName === 'id')
 }

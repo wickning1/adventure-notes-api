@@ -54,7 +54,7 @@ export class Context {
   }
 
   async getCharacters () {
-    if (!this.cache.characters) this.cache.characters = (await CharacterService.find({ player: this.user }))
+    if (!this.cache.characters) this.cache.characters = await CharacterService.find({ player: this.user })
     return this.cache.characters as Character[]
   }
 
@@ -69,7 +69,7 @@ export class Context {
         this.getCharacters(),
         this.getGMAdventures()
       ])
-      const moreadventureids = lodash.differenceBy(characters.map(c => c.adventure), gmadventures.map(a => a.id), id => id.toHexString)
+      const moreadventureids = lodash.differenceBy(characters.map(c => c.adventure), gmadventures.map(a => a.id), id => id.toHexString())
       const moreadventures = await AdventureService.find({ _id: { $in: moreadventureids } })
       this.cache.adventures = [...gmadventures, ...moreadventures]
     }

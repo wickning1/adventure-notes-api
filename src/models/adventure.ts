@@ -1,9 +1,10 @@
-import { ObjectType, Field, Int, Resolver, Query, Arg, FieldResolver, InputType, Mutation, Ctx, Root } from 'type-graphql'
+import { ObjectType, Field, Int, Resolver, Query, Arg, FieldResolver, InputType, Mutation, Ctx, Root, Info } from 'type-graphql'
 import { ObjectId } from 'mongodb'
 import { ObjectIdScalar, Context } from '../lib'
 import { Character, User } from '.'
 import { withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
 import { CharacterFilters } from './character'
+import { GraphQLResolveInfo } from 'graphql'
 
 @ObjectType({ isAbstract: true })
 @InputType()
@@ -49,8 +50,8 @@ export class AdventureResolver {
 
   /** Local References **/
   @FieldResolver(returns => User)
-  async gamemaster (@Root() adventure: Adventure, @Ctx() ctx: Context) {
-    return ctx.userService.get(adventure.gamemaster)
+  async gamemaster (@Root() adventure: Adventure, @Ctx() ctx: Context, @Info() info: GraphQLResolveInfo) {
+    return ctx.userService.get(adventure.gamemaster, info)
   }
 
   /** Foreign References **/

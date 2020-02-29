@@ -3,7 +3,8 @@ import { ObjectId, IndexOptions } from 'mongodb'
 import { ClassType, UnauthorizedError } from 'type-graphql'
 import { DataLoaderFactory } from 'dataloader-factory'
 import { Required } from 'utility-types'
-import { Context, mongo, ConcurrencyError, toClass, UnauthenticatedError, startup, NotFoundError, andFilters } from '../lib'
+import { Context, mongo, ConcurrencyError, toClass, UnauthenticatedError, startup, NotFoundError, andFilters, onlyResolveId } from '../lib'
+import { GraphQLResolveInfo } from 'graphql'
 
 export interface BasicModel {
   _id: ObjectId
@@ -80,7 +81,7 @@ export abstract class BaseService<T extends BasicModel = any> {
   // gives services the option to add authorization based filtering before
   // regular queries. the 'find' function skips this, but all the 'get*',
   // 'create', 'update*', 'save' functions respect it
-  // overrides MUST call super and should do it at the end of their own logic
+  // overrides MUST call super and should do it at the beginning of their own logic
   protected static async authfilters (ctx: Context, graphqlfilter: any = {}): Promise<any[]> {
     if (!ctx.user) throw new UnauthenticatedError()
     if (ctx.superadmin) return []
@@ -88,6 +89,7 @@ export abstract class BaseService<T extends BasicModel = any> {
   }
 
   protected async cleanse (item: T): Promise<T|undefined> {
+    if (!item) return item
     for (const helper of this.mixinHelpersWithCleanse) {
       await helper.cleanse(item)
     }
@@ -111,8 +113,9 @@ export abstract class BaseService<T extends BasicModel = any> {
     return authfilters.concat(graphqlfilters)
   }
 
-  async get (id?: ObjectId) {
+  async get (id?: ObjectId, info?: GraphQLResolveInfo) {
     if (!id) return undefined
+    if (onlyResolveId(info)) return this.toModel({ _id: id })
     return this.cleanse(await this.ctx.dataLoaderFactory.get(this.dlname).load(id))
   }
 
@@ -120,9 +123,9 @@ export abstract class BaseService<T extends BasicModel = any> {
     return this.ctx.dataLoaderFactory.get(this.dlname + '_unauthenticated').load(id)
   }
 
-  async getMany (ids: ObjectId[]) {
+  async getMany (ids: ObjectId[], info?: GraphQLResolveInfo) {
     if (!ids || !ids.length) return []
-    return (await Promise.all(ids.map(id => this.get(id)))).filter(Boolean) as T[]
+    return (await Promise.all(ids.map(id => this.get(id, info)))).filter(Boolean) as T[]
   }
 
   async getFiltered (graphqlfilter: any = {}) {
