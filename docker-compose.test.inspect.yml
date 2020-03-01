@@ -14,7 +14,7 @@ services:
     volumes:
       - ./src:/usr/app/src
       - ./dist:/usr/app/dist
-    adventure-notes-db:
+  adventure-notes-db:
     image: mongo:latest
     command: --logpath /dev/null
     ports:
