@@ -45,9 +45,6 @@ export class KnownByFilterInput extends BaseFilterInput {
 
   @Field(type => [ObjectIdScalar], { nullable: true })
   knownby?: ObjectId[]
-
-  @Field({ nullable: true, description: 'When true, known-by filter will be skipped. Good for presenting a list of things to teach to the currently logged in character.' })
-  ignoreKnownBy?: boolean
 }
 
 export class KnownByServiceHelper extends ServiceMixinHelper {
@@ -103,15 +100,6 @@ export class KnownByServiceHelper extends ServiceMixinHelper {
     return ret
   }
 
-  async cleanse (item: any) {
-    if (this.ctx.character && !item.knownby.some((charId:ObjectId) => charId.equals(this.ctx.character!))) {
-      const keep = ['_id', 'name']
-      for (const key of Object.keys(item)) {
-        if (!keep.includes(key)) delete item[key]
-      }
-    }
-  }
-
   async presave (item: any) {
     if (!this.ctx.user) throw new UnauthenticatedError()
     if (!item.adventure) item.adventure = this.ctx.adventure
@@ -125,7 +113,7 @@ export class KnownByServiceHelper extends ServiceMixinHelper {
 }
 
 export class KnownByService<M extends BasicModel> extends BaseServiceMixin<M> {
-  async getByAdventureId (adventureId: ObjectId, graphqlfilter: any) {
+  async getByAdventureId (adventureId: ObjectId, graphqlfilter?: any) {
     return this.service.getOneToMany(this.service.dlname + 'ByAdventureId', adventureId, graphqlfilter)
   }
 

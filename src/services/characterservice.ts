@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb'
 import { Character, CharacterFilters, Adventure, CharacterCreate, User, CharacterUpdate } from '../models'
 import { UnauthenticatedError, randomString } from '../lib'
 import { BaseService, AdventureService } from '.'
-import { KnownByServiceHelper, KnownByService, AlignmentServiceHelper } from '../mixins'
+import { KnownByServiceHelper, KnownByService, AlignmentServiceHelper, NameServiceHelper } from '../mixins'
 import { UserService } from './userservice'
 
 DataLoaderFactory.registerOneToMany<ObjectId, Character>('charactersByPlayerId', {
@@ -20,7 +20,7 @@ export class CharacterService extends BaseService<Character> {
 
   private knownByService = new KnownByService(this)
 
-  async translatefilters (filter: CharacterFilters) {
+  async filters (filter: CharacterFilters) {
     const ret = await super.filters(filter)
 
     if (filter.mayLoginAs) {
@@ -76,7 +76,7 @@ export class CharacterService extends BaseService<Character> {
     return super.save(info)
   }
 
-  async getByAdventureId (adventureId: ObjectId, graphqlfilter: any) {
+  async getByAdventureId (adventureId: ObjectId, graphqlfilter?: any) {
     return this.knownByService.getByAdventureId(adventureId, graphqlfilter)
   }
 
@@ -85,9 +85,8 @@ export class CharacterService extends BaseService<Character> {
   }
 }
 
-CharacterService.setHelpers(KnownByServiceHelper, AlignmentServiceHelper)
+CharacterService.setHelpers(NameServiceHelper, KnownByServiceHelper, AlignmentServiceHelper)
 
 CharacterService.onStartup(async () => {
-  await CharacterService.createIndex('name', { unique: true })
   await CharacterService.createIndex('player', { sparse: true })
 })

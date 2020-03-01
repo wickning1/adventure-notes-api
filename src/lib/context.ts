@@ -1,11 +1,9 @@
 import { DataLoaderFactory } from 'dataloader-factory'
-import { UserService, AdventureService } from '../services'
 import jwt from 'jsonwebtoken'
 import lodash from 'lodash'
 import { ObjectId } from 'mongodb'
-import { CharacterService } from '../services/characterservice'
+import { UserService, AdventureService, CharacterService, ItemService, LocationService } from '../services'
 import { Character, Adventure } from '../models'
-import { ItemService } from '../services/itemservice'
 
 export class Context {
   public adventure?: ObjectId
@@ -17,6 +15,7 @@ export class Context {
   private userServiceInstance?: UserService
   private characterServiceInstance?: CharacterService
   private itemServiceInstance?: ItemService
+  private locationServiceInstance?: LocationService
   private cache:any = {}
 
   constructor (authHeader: string | undefined) {
@@ -48,6 +47,11 @@ export class Context {
   get itemService () {
     if (!this.itemServiceInstance) this.itemServiceInstance = new ItemService(this)
     return this.itemServiceInstance
+  }
+
+  get locationService () {
+    if (!this.locationServiceInstance) this.locationServiceInstance = new LocationService(this)
+    return this.locationServiceInstance
   }
 
   async getCharacter () {

@@ -1,3 +1,6 @@
 export * from './baseservice'
 export * from './adventureservice'
+export * from './characterservice'
+export * from './itemservice'
+export * from './locationservice'
 export * from './userservice'

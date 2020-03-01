@@ -1,14 +1,19 @@
-import { ObjectType, Field, Int, Resolver, Query, Arg, FieldResolver, InputType, Mutation, Ctx, Root, Info } from 'type-graphql'
-import { ObjectId } from 'mongodb'
-import { ObjectIdScalar, Context } from '../lib'
-import { Character, User } from '.'
-import { withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
-import { CharacterFilters } from './character'
 import { GraphQLResolveInfo } from 'graphql'
+import { ObjectId } from 'mongodb'
+import { ObjectType, Field, Int, Resolver, Query, Arg, FieldResolver, InputType, Mutation, Ctx, Root, Info } from 'type-graphql'
+import { ObjectIdScalar, Context, toClass } from '../lib'
+import { User } from '.'
+import { withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
 
 @ObjectType({ isAbstract: true })
 @InputType()
 export class AdventureDetails {
+  @Field()
+  name!: string
+}
+
+@ObjectType()
+export class BasicNoteInfo extends withId(Object) {
   @Field()
   name!: string
 }
@@ -41,6 +46,14 @@ export class AdventureFilter extends BaseFilterInput {
   gamemasters?: ObjectId[]
 }
 
+function generateDescription (collName: string) {
+  return `This is a special resolver that returns all the ${collName} associated with an adventure,
+    even those the logged in character should not be able to see. All information is blanked
+    out except the name. This is useful for showing a list when the user knows that their
+    character just learned about something new, so that they can associate the new thing with
+    their character.`
+}
+
 @Resolver(of => Adventure)
 export class AdventureResolver {
   @Query(returns => [Adventure])
@@ -55,9 +68,28 @@ export class AdventureResolver {
   }
 
   /** Foreign References **/
-  @FieldResolver(returns => [Character])
-  async characters (@Root() adventure: Adventure, @Ctx() ctx: Context, @Arg('filter', { nullable: true }) filter?: CharacterFilters): Promise<Character[]> {
-    return ctx.characterService.getByAdventureId(adventure.id, filter)
+  @FieldResolver(returns => [BasicNoteInfo], {
+    description: generateDescription('characters')
+  })
+  async allCharacters (@Root() adventure: Adventure, @Ctx() ctx: Context) {
+    const chars = await ctx.characterService.getByAdventureId(adventure.id, { ignoreKnownBy: true })
+    return toClass(chars, BasicNoteInfo)
+  }
+
+  @FieldResolver(returns => [BasicNoteInfo], {
+    description: generateDescription('items')
+  })
+  async allItems (@Root() adventure: Adventure, @Ctx() ctx: Context) {
+    const chars = await ctx.itemService.getByAdventureId(adventure.id, { ignoreKnownBy: true })
+    return toClass(chars, BasicNoteInfo)
+  }
+
+  @FieldResolver(returns => [BasicNoteInfo], {
+    description: generateDescription('locations')
+  })
+  async allLocations (@Root() adventure: Adventure, @Ctx() ctx: Context) {
+    const chars = await ctx.locationService.getByAdventureId(adventure.id, { ignoreKnownBy: true })
+    return toClass(chars, BasicNoteInfo)
   }
 
   @Mutation(returns => Adventure)
@@ -75,11 +107,13 @@ export class AdventureResolver {
     @Ctx() ctx: Context,
     @Arg('nowKnownBy', type => [ObjectIdScalar]) nowKnownBy: ObjectId[],
     @Arg('characters', type => [ObjectIdScalar], { nullable: true }) characters: ObjectId[],
-    @Arg('items', type => [ObjectIdScalar], { nullable: true }) items: ObjectId[]
+    @Arg('items', type => [ObjectIdScalar], { nullable: true }) items: ObjectId[],
+    @Arg('locations', type => [ObjectIdScalar], { nullable: true }) locations: ObjectId[]
   ) {
     await Promise.all([
       ctx.characterService.addKnownBy(characters, nowKnownBy),
-      ctx.itemService.addKnownBy(items, nowKnownBy)
+      ctx.itemService.addKnownBy(items, nowKnownBy),
+      ctx.locationService.addKnownBy(locations, nowKnownBy)
     ])
     return true
   }

@@ -64,6 +64,7 @@ describe('create items', () => {
   })
   it('should have set Cork as being able to see his Lute, even though Crux created it', async () => {
     const { items: itemsCorkSees } = await gql.getClient('Cork').request(GET_ITEMS)
+    console.log(itemsCorkSees)
     expect(itemsCorkSees.some((itm:any) => itm.name === 'Lute')).to.be.true
   })
   it('should be able to teach the PCs about the party-equipped items', async () => {
@@ -75,5 +76,9 @@ describe('create items', () => {
     ])
     const { items: itemsAndralNowKnows } = await gql.getClient('Andral').request(GET_ITEMS)
     expect(itemsAndralNowKnows).to.have.lengthOf(2)
+  })
+  it('should be able to retrieve a list of items being held', async () => {
+    const { items: itemsBeingHeld } = await gql.getClient('alpha').request('{ items (filter:{isHeld:true}) { id, name } }')
+    expect(itemsBeingHeld).to.have.lengthOf(1)
   })
 })

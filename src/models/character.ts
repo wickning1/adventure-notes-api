@@ -1,56 +1,45 @@
 import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg, Mutation } from 'type-graphql'
 import { ObjectId } from 'mongodb'
-import { Context } from '../lib'
+import { Context, ObjectIdScalar } from '../lib'
 import { User } from '.'
-import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput } from '../mixins'
+import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput, withInputName, withInputAlignment, withAlignmentFilter, withName } from '../mixins'
+import { ItemFilters, Item } from './item'
 
 @ObjectType({ isAbstract: true })
 @InputType({ isAbstract: true })
 export class CharacterDetails {
-  @Field()
-  name!: string
-
   @Field({ nullable: true })
   player?: ObjectId
 }
 
 @ObjectType()
-export class Character extends withAlignment(withKnownBy(withId(CharacterDetails))) {
-  @Field(type => [String])
-  aliases!: string[]
-
+export class Character extends withName(withAlignment(withKnownBy(withId(CharacterDetails)))) {
   @Field({ nullable: true })
   invitation?: string
 }
 
 @InputType()
-export class CharacterCreate extends withAlignment(CharacterDetails) {
+export class CharacterCreate extends withInputName(withInputAlignment(CharacterDetails)) {
   @Field({ nullable: true })
   playerEmail?: string
-
-  @Field(type => [String], { nullable: true })
-  aliases?: string[]
 }
 
 @InputType()
-export class CharacterUpdate extends withAlignment(BaseUpdateInput) {
+export class CharacterUpdate extends withInputName(withInputAlignment(BaseUpdateInput)) {
   @Field({ nullable: true })
-  name?: string
-
-  @Field(type => [String], { nullable: true })
-  aliases?: string[]
+  player?: ObjectId
 
   @Field({ nullable: true })
   playerEmail?: string
 }
 
 @InputType()
-export class CharacterFilters extends KnownByFilterInput {
-  @Field({ nullable: true, description: 'When true, query only returns characters for which the user is permitted to use the "Point of View" feature.' })
-  mayLoginAs?: boolean
-
+export class CharacterFilters extends withAlignmentFilter(KnownByFilterInput) {
   @Field({ nullable: true, description: 'When true, only return characters that have a player. When false, only return NPCs.' })
   isPlayerCharacter?: boolean
+
+  @Field(type => [ObjectIdScalar], { nullable: true })
+  player?: ObjectId[]
 }
 
 @Resolver(of => Character)
@@ -63,6 +52,11 @@ export class CharacterResolver extends withKnownByResolver(Character, Object) {
   @FieldResolver(returns => User, { nullable: true })
   async player (@Root() character: Character, @Ctx() ctx: Context) {
     return ctx.userService.get(character.player)
+  }
+
+  @FieldResolver(returns => [Item])
+  async items (@Root() character: Character, @Ctx() ctx: Context, @Arg('filter', { nullable: true }) filter?: ItemFilters) {
+    return ctx.itemService.getByCharacterId(character.id, filter)
   }
 
   @Mutation(returns => Character)

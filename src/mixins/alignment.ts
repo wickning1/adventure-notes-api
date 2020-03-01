@@ -43,20 +43,18 @@ export class AlignmentResolver {
 
 export function withAlignment<T extends ClassType> (NextMixinClass: T) {
   @ObjectType({ isAbstract: true })
-  @InputType({ isAbstract: true })
   class AlignmentTrait extends NextMixinClass {
-    @Field({ nullable: true })
-    alignment?: Alignment
+    @Field()
+    alignment: Alignment = { lawful: LawfulType.UNKNOWN, good: GoodType.UNKNOWN }
   }
   return AlignmentTrait
 }
 
-export function withMandatoryAlignment<T extends ClassType> (NextMixinClass: T) {
-  @ObjectType({ isAbstract: true })
+export function withInputAlignment<T extends ClassType> (NextMixinClass: T) {
   @InputType({ isAbstract: true })
   class AlignmentTrait extends NextMixinClass {
-    @Field()
-    alignment!: Alignment
+    @Field({ nullable: true })
+    alignment?: Alignment
   }
   return AlignmentTrait
 }
@@ -77,9 +75,5 @@ export class AlignmentServiceHelper extends ServiceMixinHelper {
   static async onStartup (service: typeof BaseService) {
     await service.createIndex('alignment.lawfulType')
     await service.createIndex('alignment.goodType')
-  }
-
-  async presave (item: any) {
-    if (!item.alignment) item.alignment = { lawful: LawfulType.UNKNOWN, good: GoodType.UNKNOWN }
   }
 }

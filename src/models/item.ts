@@ -3,14 +3,11 @@ import { ObjectId } from 'mongodb'
 import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg, Mutation, Info } from 'type-graphql'
 import { Context, ObjectIdScalar } from '../lib'
 import { Character } from '.'
-import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput } from '../mixins'
+import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput, withInputAlignment, withName, withInputName } from '../mixins'
 
 @ObjectType({ isAbstract: true })
 @InputType({ isAbstract: true })
 export class ItemDetails {
-  @Field()
-  name!: string
-
   @Field({ nullable: true })
   description?: string
 
@@ -19,18 +16,15 @@ export class ItemDetails {
 }
 
 @ObjectType()
-export class Item extends withAlignment(withKnownBy(withId(ItemDetails))) {
+export class Item extends withName(withAlignment(withKnownBy(withId(ItemDetails)))) {
 }
 
 @InputType()
-export class ItemCreate extends withAlignment(ItemDetails) {
+export class ItemCreate extends withInputName(withInputAlignment(ItemDetails)) {
 }
 
 @InputType()
-export class ItemUpdate extends withAlignment(BaseUpdateInput) {
-  @Field({ nullable: true })
-  name?: string
-
+export class ItemUpdate extends withInputName(withInputAlignment(BaseUpdateInput)) {
   @Field({ nullable: true })
   description?: string
 }

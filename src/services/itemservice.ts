@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb'
 import { Item, ItemFilters, ItemCreate, ItemUpdate } from '../models'
 import { push } from '../lib'
 import { BaseService } from '.'
-import { KnownByServiceHelper, KnownByService, AlignmentServiceHelper } from '../mixins'
+import { KnownByServiceHelper, KnownByService, AlignmentServiceHelper, NameServiceHelper } from '../mixins'
 
 DataLoaderFactory.registerOneToMany<ObjectId, Item>('itemsByCharacterId', {
   fetch: async (ids, filters) => {
@@ -19,7 +19,7 @@ export class ItemService extends BaseService<Item> {
 
   private knownByService = new KnownByService(this)
 
-  async translatefilters (filter: ItemFilters) {
+  async filters (filter: ItemFilters) {
     const ret = await super.filters(filter)
 
     if (filter.isHeld) ret.push({ heldBy: { $ne: null } })
@@ -48,7 +48,7 @@ export class ItemService extends BaseService<Item> {
     return super.save(info)
   }
 
-  async getByAdventureId (adventureId: ObjectId, graphqlfilter: any) {
+  async getByAdventureId (adventureId: ObjectId, graphqlfilter?: any) {
     return this.knownByService.getByAdventureId(adventureId, graphqlfilter)
   }
 
@@ -57,9 +57,8 @@ export class ItemService extends BaseService<Item> {
   }
 }
 
-ItemService.setHelpers(KnownByServiceHelper, AlignmentServiceHelper)
+ItemService.setHelpers(NameServiceHelper, KnownByServiceHelper, AlignmentServiceHelper)
 
 ItemService.onStartup(async () => {
-  await ItemService.createIndex('name', { unique: true })
   await ItemService.createIndex('heldBy', { sparse: true })
 })
