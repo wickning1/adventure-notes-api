@@ -1,9 +1,8 @@
-import { BaseService } from './baseservice'
-import { AdventureUpdate, Adventure, AdventureDetails, AdventureFilter } from '../models'
-import { ObjectId } from 'mongodb'
 import { DataLoaderFactory } from 'dataloader-factory'
-import { NotFoundError, Context, UnauthenticatedError } from '../lib'
-import { ForbiddenError } from 'type-graphql'
+import { ObjectId } from 'mongodb'
+import { BaseService } from './baseservice'
+import { NotFoundError, Context, UnauthenticatedError, NotAuthorizedError } from '../lib'
+import { AdventureUpdate, Adventure, AdventureDetails, AdventureFilter } from '../models'
 
 DataLoaderFactory.registerOneToMany<ObjectId, Adventure>('adventureByDmId', {
   fetch: async (ids, filters) => {
@@ -50,7 +49,7 @@ export class AdventureService extends BaseService<Adventure> {
     if (!this.ctx.user) throw new UnauthenticatedError()
     const adventure = await this.get(info.id)
     if (!adventure) throw new NotFoundError()
-    if (this.ctx.user !== adventure.gamemaster) throw new ForbiddenError()
+    if (this.ctx.user !== adventure.gamemaster && !this.ctx.superadmin) throw new NotAuthorizedError()
     return super.save(info)
   }
 }

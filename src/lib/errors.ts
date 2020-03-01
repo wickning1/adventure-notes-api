@@ -1,4 +1,4 @@
-import { ApolloError, AuthenticationError } from 'apollo-server'
+import { ApolloError, AuthenticationError, ForbiddenError } from 'apollo-server'
 
 export class ConcurrencyError extends ApolloError {
   constructor (message?: string) {
@@ -21,5 +21,11 @@ export class NotFoundError extends ApolloError {
 export class UnauthenticatedError extends AuthenticationError {
   constructor (message?: string) {
     super(message || 'You must log in first.')
+  }
+}
+
+export class NotAuthorizedError extends ForbiddenError {
+  constructor (message?: string) {
+    super(message || 'You are not allowed to do that.')
   }
 }

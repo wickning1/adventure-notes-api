@@ -1,8 +1,8 @@
-import { ObjectType, InputType, Field, Resolver, FieldResolver, Root, Ctx, Query, Mutation, Arg, UnauthorizedError } from 'type-graphql'
 import { ApolloError } from 'apollo-server'
+import { ObjectType, InputType, Field, Resolver, FieldResolver, Root, Ctx, Query, Mutation, Arg } from 'type-graphql'
 import { ObjectId } from 'mongodb'
 import { withId, BaseUpdateInput, BaseFilterInput } from '../mixins'
-import { Context } from '../lib'
+import { Context, NotAuthorizedError } from '../lib'
 import { Adventure, Character } from '.'
 
 @ObjectType({ isAbstract: true })
@@ -100,7 +100,7 @@ export class UserResolver {
   ) {
     const characters = await ctx.characterService.mayLoginAs()
     const character = characters.find(c => c.id.equals(characterId.toHexString()))
-    if (!character) throw new UnauthorizedError()
+    if (!character) throw new NotAuthorizedError()
     const token = ctx.getToken({ user: ctx.user!, adventure: character.adventure, character: character.id })
     return { token }
   }
@@ -114,8 +114,7 @@ export class UserResolver {
   ) {
     const adventures = await ctx.getAdventures()
     if (!adventures.some(a => a.id.equals(adventureId))) {
-      console.log(adventures, adventureId)
-      throw new UnauthorizedError()
+      throw new NotAuthorizedError()
     }
     const token = ctx.getToken({ user: ctx.user!, adventure: adventureId })
     return { token }

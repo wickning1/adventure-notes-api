@@ -1,9 +1,9 @@
 /* eslint-disable no-use-before-define */
 import { ObjectId, IndexOptions } from 'mongodb'
-import { ClassType, UnauthorizedError } from 'type-graphql'
+import { ClassType } from 'type-graphql'
 import { DataLoaderFactory } from 'dataloader-factory'
 import { Required } from 'utility-types'
-import { Context, mongo, ConcurrencyError, toClass, UnauthenticatedError, startup, NotFoundError, andFilters, onlyResolveId } from '../lib'
+import { Context, mongo, ConcurrencyError, toClass, UnauthenticatedError, startup, NotFoundError, andFilters, onlyResolveId, NotAuthorizedError } from '../lib'
 import { GraphQLResolveInfo } from 'graphql'
 
 export interface BasicModel {
@@ -171,7 +171,7 @@ export abstract class BaseService<T extends BasicModel = any> {
     if (!ret) throw new NotFoundError()
     if (!result.matchedCount) {
       if ((ret as any)._version && search._version && (ret as any)._version !== search._version) throw new ConcurrencyError()
-      else throw new UnauthorizedError()
+      else throw new NotAuthorizedError()
     }
     return ret
   }
