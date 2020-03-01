@@ -47,3 +47,9 @@ export function onlyResolveId (info?: GraphQLResolveInfo) {
   const selections = info?.fieldNodes[0].selectionSet?.selections
   return (selections?.length === 1 && info?.fieldName === 'id')
 }
+
+export function push<ItemType = any> (array:ItemType[], item:ItemType) {
+  if (!array?.length) array = []
+  array.push(item)
+  return array
+}

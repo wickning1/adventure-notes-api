@@ -1,7 +1,6 @@
-/* eslint-disable no-unused-expressions */
 /* global describe, it */
 import { expect } from 'chai'
-import { gql } from '../lib'
+import { gql, storage } from '../lib'
 
 const CREATE_CHARACTER = `
 mutation ($info:CharacterCreate!) {
@@ -52,7 +51,7 @@ mutation ($characters:[ObjectId!]!, $nowKnownBy:[ObjectId!]!) {
 }
 `
 
-const charsByName: any = {}
+storage.charsByName = {}
 async function createPlayerCharacter (info: any, playerName: string, gmName: string) {
   info.playerEmail = `${playerName}@test.com`
   const { createCharacter: char } = await gql.getClient(gmName + '_gm').request(CREATE_CHARACTER, { info })
@@ -60,7 +59,7 @@ async function createPlayerCharacter (info: any, playerName: string, gmName: str
   expect(char.adventure.id).is.a('string')
   expect(char.name).to.equal(info.name)
   expect(char.knownby.map((kb:any) => kb.id)).includes(char.id)
-  charsByName[char.name] = char
+  storage.charsByName[char.name] = char
   // create token logged in as character
   const { loginAsCharacter: { token } } = await gql.getClient(playerName).request(LOG_IN_AS_CHARACTER, { character: char.id })
   expect(token).to.be.a('string')
@@ -76,7 +75,7 @@ async function createNPC (info: any, loggedInCharName: string, gmName: string) {
   const { createCharacter: char } = await gql.getClient(loggedInCharName).request(CREATE_CHARACTER, { info })
   expect(char.player).to.be.a('null')
   expect(char.adventure.id).to.be.a('string')
-  charsByName[char.name] = char
+  storage.charsByName[char.name] = char
   const { loginAsCharacter: { token } } = await gql.getClient(gmName).request(LOG_IN_AS_CHARACTER, { character: char.id })
   expect(token).to.be.a('string')
   gql.storeToken(char.name, token)
@@ -85,16 +84,15 @@ async function createNPC (info: any, loggedInCharName: string, gmName: string) {
 
 async function teachAbout (gmName: string, charNames: string[], nowKnownByNames: string[]) {
   const characters = charNames.map(nm => {
-    return charsByName[nm].id
+    return storage.charsByName[nm].id
   })
-  const nowKnownBy = nowKnownByNames.map(nm => charsByName[nm].id)
+  const nowKnownBy = nowKnownByNames.map(nm => storage.charsByName[nm].id)
   await gql.getClient(gmName).request(TEACH_ABOUT, { characters, nowKnownBy })
 }
 
 describe('create characters', () => {
-  const characters:any = {}
   it('should create 11 player characters', async () => {
-    const chars = await Promise.all([
+    await Promise.all([
       // first adventure
       createPlayerCharacter({ name: 'Beta', alignment: { lawful: 'LAWFUL', good: 'GOOD' } }, 'beta', 'alpha'),
       createPlayerCharacter({ name: 'Andral', alignment: { lawful: 'NEUTRAL', good: 'GOOD' } }, 'john', 'alpha'),
@@ -109,8 +107,6 @@ describe('create characters', () => {
       createPlayerCharacter({ name: 'Cork', alignment: { lawful: 'UNKNOWN', good: 'UNKNOWN' } }, 'nate', 'beta'),
       createPlayerCharacter({ name: 'Cestus', alignment: { lawful: 'UNKNOWN', good: 'EVIL' } }, 'mike', 'beta')
     ])
-
-    for (const char of chars) characters[char.name] = char
   })
   it('should create 12 NPCs', async () => {
     await Promise.all([
@@ -129,7 +125,7 @@ describe('create characters', () => {
     ])
   })
   it('should not allow players to log in to the wrong character', async () => {
-    const promise = gql.getClient('john').request(LOG_IN_AS_CHARACTER, { character: characters.Artus.id })
+    const promise = gql.getClient('john').request(LOG_IN_AS_CHARACTER, { character: storage.charsByName.Artus.id })
     expect(promise).to.be.rejected
   })
   it('should be able to teach the PCs about each other', async () => {

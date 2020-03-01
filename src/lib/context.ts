@@ -5,6 +5,7 @@ import lodash from 'lodash'
 import { ObjectId } from 'mongodb'
 import { CharacterService } from '../services/characterservice'
 import { Character, Adventure } from '../models'
+import { ItemService } from '../services/itemservice'
 
 export class Context {
   public adventure?: ObjectId
@@ -15,6 +16,7 @@ export class Context {
   private adventureServiceInstance?: AdventureService
   private userServiceInstance?: UserService
   private characterServiceInstance?: CharacterService
+  private itemServiceInstance?: ItemService
   private cache:any = {}
 
   constructor (authHeader: string | undefined) {
@@ -41,6 +43,11 @@ export class Context {
   get characterService () {
     if (!this.characterServiceInstance) this.characterServiceInstance = new CharacterService(this)
     return this.characterServiceInstance
+  }
+
+  get itemService () {
+    if (!this.itemServiceInstance) this.itemServiceInstance = new ItemService(this)
+    return this.itemServiceInstance
   }
 
   async getCharacter () {

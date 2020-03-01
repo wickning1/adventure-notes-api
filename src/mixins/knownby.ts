@@ -120,6 +120,7 @@ export class KnownByServiceHelper extends ServiceMixinHelper {
     if (this.ctx.character && item.knownby.every((charId: ObjectId) => !charId.equals(this.ctx.character!))) {
       item.knownby.push(this.ctx.character)
     }
+    item.knownby = Array.from(new Set(item.knownby))
   }
 }
 
@@ -129,7 +130,9 @@ export class KnownByService<M extends BasicModel> extends BaseServiceMixin<M> {
   }
 
   async addKnownBy (ids: ObjectId[], characterIds: ObjectId[], skipAuth?: boolean) {
+    if (!ids?.length || !characterIds?.length) return true
     const cleanCharacterIds = skipAuth ? (await this.service.ctx.characterService.getMany(characterIds)).map(c => c.id) : characterIds
+    if (!cleanCharacterIds?.length) return true
     return this.service.updateMany({ $addToSet: { knownby: { $each: cleanCharacterIds } } }, { _id: { $in: ids } })
   }
 }

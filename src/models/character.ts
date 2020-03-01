@@ -2,7 +2,7 @@ import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query
 import { ObjectId } from 'mongodb'
 import { Context } from '../lib'
 import { User } from '.'
-import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput, withMandatoryAlignment } from '../mixins'
+import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput } from '../mixins'
 
 @ObjectType({ isAbstract: true })
 @InputType({ isAbstract: true })
@@ -24,7 +24,7 @@ export class Character extends withAlignment(withKnownBy(withId(CharacterDetails
 }
 
 @InputType()
-export class CharacterCreate extends withMandatoryAlignment(CharacterDetails) {
+export class CharacterCreate extends withAlignment(CharacterDetails) {
   @Field({ nullable: true })
   playerEmail?: string
 

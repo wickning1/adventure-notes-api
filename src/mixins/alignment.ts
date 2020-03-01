@@ -73,9 +73,13 @@ export function withAlignmentFilter<T extends ClassType> (NextMixinClass: T) {
   return AlignmentInput
 }
 
-export class AlignmentTrait extends ServiceMixinHelper {
+export class AlignmentServiceHelper extends ServiceMixinHelper {
   static async onStartup (service: typeof BaseService) {
     await service.createIndex('alignment.lawfulType')
     await service.createIndex('alignment.goodType')
+  }
+
+  async presave (item: any) {
+    if (!item.alignment) item.alignment = { lawful: LawfulType.UNKNOWN, good: GoodType.UNKNOWN }
   }
 }

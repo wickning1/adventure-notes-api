@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb'
 import { Character, CharacterFilters, Adventure, CharacterCreate, User, CharacterUpdate } from '../models'
 import { UnauthenticatedError, randomString } from '../lib'
 import { BaseService, AdventureService } from '.'
-import { KnownByServiceHelper, KnownByService } from '../mixins'
+import { KnownByServiceHelper, KnownByService, AlignmentServiceHelper } from '../mixins'
 import { UserService } from './userservice'
 
 DataLoaderFactory.registerOneToMany<ObjectId, Character>('charactersByPlayerId', {
@@ -85,7 +85,7 @@ export class CharacterService extends BaseService<Character> {
   }
 }
 
-CharacterService.setHelpers(KnownByServiceHelper)
+CharacterService.setHelpers(KnownByServiceHelper, AlignmentServiceHelper)
 
 CharacterService.onStartup(async () => {
   await CharacterService.createIndex('name', { unique: true })

@@ -74,8 +74,13 @@ export class AdventureResolver {
   async updateKnownBy (
     @Ctx() ctx: Context,
     @Arg('nowKnownBy', type => [ObjectIdScalar]) nowKnownBy: ObjectId[],
-    @Arg('characters', type => [ObjectIdScalar], { nullable: true }) characters: ObjectId[]
+    @Arg('characters', type => [ObjectIdScalar], { nullable: true }) characters: ObjectId[],
+    @Arg('items', type => [ObjectIdScalar], { nullable: true }) items: ObjectId[]
   ) {
-    return ctx.characterService.addKnownBy(characters, nowKnownBy)
+    await Promise.all([
+      ctx.characterService.addKnownBy(characters, nowKnownBy),
+      ctx.itemService.addKnownBy(items, nowKnownBy)
+    ])
+    return true
   }
 }
