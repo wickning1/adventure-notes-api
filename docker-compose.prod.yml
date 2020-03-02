@@ -1,15 +1,36 @@
 version: '3'
 services:
+  letsencrypt:
+    image: linuxserver/letsencrypt
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
   adventure-notes-api:
     build:
       context: .
     environment:
       JWT_SECRET: supersecret
-    ports:
-      - 4000:80
+      DB_USER: root
+      DB_PASS: overridethis
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+          max-file: 5
+          max-size: 10m
   adventure-notes-db:
     image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: overridethis
+    logging:
+      driver: "json-file"
+      options:
+          max-file: 5
+          max-size: 10m
     volumes:
-      - adventure-notes-db:/data/db
+      - ./database:/data/db
 volumes:
   adventure-notes-db: {}
