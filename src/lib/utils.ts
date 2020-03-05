@@ -2,7 +2,8 @@ import crypto from 'crypto'
 import { ClassType } from 'type-graphql'
 import { GraphQLResolveInfo } from 'graphql'
 
-export function toArray<ItemType> (items: ItemType | ItemType[]): ItemType[] {
+export function toArray<ItemType> (items?: ItemType | ItemType[]): ItemType[] {
+  if (!items) return []
   return Array.isArray(items) ? items : [items]
 }
 
@@ -48,8 +49,8 @@ export function onlyResolveId (info?: GraphQLResolveInfo) {
   return (selections?.length === 1 && info?.fieldName === 'id')
 }
 
-export function push<ItemType = any> (array:ItemType[], item:ItemType) {
+export function push<ItemType = any> (array:ItemType[], ...items:ItemType[]) {
   if (!array?.length) array = []
-  array.push(item)
+  array.push(...items)
   return array
 }

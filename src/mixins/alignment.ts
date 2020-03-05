@@ -50,7 +50,7 @@ export function withAlignment<T extends ClassType> (NextMixinClass: T) {
   return AlignmentTrait
 }
 
-export function withInputAlignment<T extends ClassType> (NextMixinClass: T) {
+export function withOptionalAlignment<T extends ClassType> (NextMixinClass: T) {
   @InputType({ isAbstract: true })
   class AlignmentTrait extends NextMixinClass {
     @Field({ nullable: true })

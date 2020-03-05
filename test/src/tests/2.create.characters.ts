@@ -97,7 +97,7 @@ describe('create characters', () => {
       createPlayerCharacter({ name: 'Beta', alignment: { lawful: 'LAWFUL', good: 'GOOD' } }, 'beta', 'alpha'),
       createPlayerCharacter({ name: 'Andral', alignment: { lawful: 'NEUTRAL', good: 'GOOD' } }, 'john', 'alpha'),
       createPlayerCharacter({ name: 'Artus', alignment: { lawful: 'CHAOTIC', good: 'GOOD' } }, 'jenn', 'alpha'),
-      createPlayerCharacter({ name: 'Aesop', alignment: { lawful: 'LAWFUL', good: 'NEUTRAL' } }, 'joe', 'alpha'),
+      createPlayerCharacter({ name: 'Aesop', aliases: ['Fable'], alignment: { lawful: 'LAWFUL', good: 'NEUTRAL' } }, 'joe', 'alpha'),
       createPlayerCharacter({ name: 'Acron', alignment: { lawful: 'LAWFUL', good: 'UNKNOWN' } }, 'mike', 'alpha'),
       // second adventure
       createPlayerCharacter({ name: 'Crux', alignment: { lawful: 'NEUTRAL', good: 'EVIL' } }, 'nick', 'beta'),
@@ -137,5 +137,15 @@ describe('create characters', () => {
     ])
     const { characters: charsCruxNowKnows } = await gql.getClient('Crux').request(GET_CHARACTERS)
     expect(charsCruxNowKnows).to.have.lengthOf(7)
+  })
+  it('should list player characters', async () => {
+    const [first, both, second] = await Promise.all([
+      gql.getClient('alpha').request('{characters(filter:{isPlayerCharacter:true}) { id, name } }'),
+      gql.getClient('beta').request('{characters(filter:{isPlayerCharacter:true}) { id, name } }'),
+      gql.getClient('Cork').request('{characters(filter:{isPlayerCharacter:true}) { id, name } }')
+    ])
+    expect(first.characters).to.have.lengthOf(5)
+    expect(both.characters).to.have.lengthOf(11)
+    expect(second.characters).to.have.lengthOf(6)
   })
 })

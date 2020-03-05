@@ -3,7 +3,7 @@ import { ObjectId, IndexOptions } from 'mongodb'
 import { ClassType } from 'type-graphql'
 import { DataLoaderFactory } from 'dataloader-factory'
 import { Required } from 'utility-types'
-import { Context, mongo, ConcurrencyError, toClass, UnauthenticatedError, startup, NotFoundError, andFilters, onlyResolveId, NotAuthorizedError } from '../lib'
+import { Context, mongo, ConcurrencyError, toClass, UnauthenticatedError, startup, NotFoundError, andFilters, onlyResolveId, NotAuthorizedError, ValidationError } from '../lib'
 import { GraphQLResolveInfo } from 'graphql'
 
 export interface BasicModel {
@@ -148,6 +148,7 @@ export abstract class BaseService<T extends BasicModel = any> {
   async create (item: any) {
     const actualitem = this.toModel(item)
     for (const helper of this.mixinHelpersWithPresave) await helper.presave(actualitem)
+    if (this.ctx.validationErrors.length) throw new ValidationError(this.ctx.validationErrors)
     const updatedoc = { ...actualitem, _version: 0 }
     actualitem._id = (await mongo.db.collection(this.dlname).insertOne(updatedoc)).insertedId
     return actualitem
@@ -159,6 +160,7 @@ export abstract class BaseService<T extends BasicModel = any> {
     if (!actualitem) throw new NotFoundError()
     Object.assign(actualitem, updatedoc)
     for (const helper of this.mixinHelpersWithPresave) await helper.presave(actualitem)
+    if (this.ctx.validationErrors.length) throw new ValidationError(this.ctx.validationErrors)
     const search = { _version: _version || actualitem._version }
     actualitem._version += 1
     return this.update(id, { $set: actualitem }, search)

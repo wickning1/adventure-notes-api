@@ -2,7 +2,7 @@ import { GraphQLResolveInfo } from 'graphql'
 import { ObjectId } from 'mongodb'
 import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query, Arg, Mutation, Info } from 'type-graphql'
 import { Context, ObjectIdScalar } from '../lib'
-import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput, withInputName, withName } from '../mixins'
+import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput, withName, withRequiredName, withOptionalName, withOptionalAlignment } from '../mixins'
 
 @ObjectType({ isAbstract: true })
 @InputType({ isAbstract: true })
@@ -10,22 +10,32 @@ export class LocationDetails {
   @Field({ nullable: true })
   description?: string
 
-  @Field({ nullable: true })
+  @Field({ nullable: true, description: 'The larger location that contains this location.' })
   inside?: ObjectId
 }
 
 @ObjectType()
 export class Location extends withName(withAlignment(withKnownBy(withId(LocationDetails)))) {
+  @Field({ nullable: true, description: 'The party owns or has been allotted property in this location. Somewhere to safely rest and such.' })
+  homestead: boolean = false
 }
 
 @InputType()
-export class LocationCreate extends withInputName(withAlignment(LocationDetails)) {
+export class LocationCreate extends withRequiredName(withOptionalAlignment(LocationDetails)) {
+  @Field({ nullable: true, description: 'The party owns or has been allotted property in this location. Somewhere to safely rest and such.' })
+  homestead?: boolean
 }
 
 @InputType()
-export class LocationUpdate extends withInputName(withAlignment(BaseUpdateInput)) {
+export class LocationUpdate extends withOptionalName(withOptionalAlignment(BaseUpdateInput)) {
   @Field({ nullable: true })
   description?: string
+
+  @Field({ nullable: true, description: 'The larger location that contains this location.' })
+  inside?: ObjectId
+
+  @Field({ nullable: true, description: 'The party owns or has been allotted property in this location. Somewhere to safely rest and such.' })
+  homestead?: boolean
 }
 
 @InputType()
@@ -35,6 +45,9 @@ export class LocationFilters extends KnownByFilterInput {
 
   @Field(type => [ObjectIdScalar], { nullable: true })
   inside?: ObjectId[]
+
+  @Field({ nullable: true })
+  homestead?: boolean
 }
 
 @Resolver(of => Location)

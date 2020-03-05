@@ -4,6 +4,7 @@ import lodash from 'lodash'
 import { ObjectId } from 'mongodb'
 import { UserService, AdventureService, CharacterService, ItemService, LocationService } from '../services'
 import { Character, Adventure } from '../models'
+import { FieldError } from './errors'
 
 export class Context {
   public adventure?: ObjectId
@@ -11,6 +12,7 @@ export class Context {
   public character?: ObjectId
   public superadmin: boolean
   public dataLoaderFactory: DataLoaderFactory<Context>
+  public validationErrors: FieldError[] = []
   private adventureServiceInstance?: AdventureService
   private userServiceInstance?: UserService
   private characterServiceInstance?: CharacterService
@@ -111,5 +113,9 @@ export class Context {
 
   getToken (payload: { user: ObjectId, adventure?: ObjectId, character?: ObjectId }) {
     return jwt.sign(payload, this.jwtSecret)
+  }
+
+  recordValidationError (field: string, message?: string) {
+    this.validationErrors.push({ field, message })
   }
 }

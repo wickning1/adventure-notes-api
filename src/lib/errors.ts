@@ -1,4 +1,4 @@
-import { ApolloError, AuthenticationError, ForbiddenError } from 'apollo-server'
+import { ApolloError, AuthenticationError, ForbiddenError, UserInputError } from 'apollo-server'
 
 export class ConcurrencyError extends ApolloError {
   constructor (message?: string) {
@@ -27,5 +27,18 @@ export class UnauthenticatedError extends AuthenticationError {
 export class NotAuthorizedError extends ForbiddenError {
   constructor (message?: string) {
     super(message || 'You are not allowed to do that.')
+  }
+}
+
+export interface FieldError {
+  field: string
+  message?: string
+}
+
+export class ValidationError extends UserInputError {
+  constructor (fielderrors: FieldError[], message?: string) {
+    super(message || 'Mutation had validation errors.', {
+      invalidArgs: fielderrors
+    })
   }
 }

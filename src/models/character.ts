@@ -2,7 +2,7 @@ import { ObjectType, Field, FieldResolver, Root, Ctx, Resolver, InputType, Query
 import { ObjectId } from 'mongodb'
 import { Context, ObjectIdScalar } from '../lib'
 import { User } from '.'
-import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput, withInputName, withInputAlignment, withAlignmentFilter, withName } from '../mixins'
+import { withAlignment, withKnownByResolver, withKnownBy, withId, BaseUpdateInput, KnownByFilterInput, withOptionalAlignment, withAlignmentFilter, withName, withRequiredName, withOptionalName } from '../mixins'
 import { ItemFilters, Item } from './item'
 
 @ObjectType({ isAbstract: true })
@@ -19,13 +19,13 @@ export class Character extends withName(withAlignment(withKnownBy(withId(Charact
 }
 
 @InputType()
-export class CharacterCreate extends withInputName(withInputAlignment(CharacterDetails)) {
+export class CharacterCreate extends withRequiredName(withOptionalAlignment(CharacterDetails)) {
   @Field({ nullable: true })
   playerEmail?: string
 }
 
 @InputType()
-export class CharacterUpdate extends withInputName(withInputAlignment(BaseUpdateInput)) {
+export class CharacterUpdate extends withOptionalName(withOptionalAlignment(BaseUpdateInput)) {
   @Field({ nullable: true })
   player?: ObjectId
 

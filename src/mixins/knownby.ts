@@ -5,7 +5,7 @@ import { Context, ObjectIdScalar, UnauthenticatedError, onlyResolveId, toClass }
 import { BaseFilterInput } from './document'
 import { DataLoaderFactory } from 'dataloader-factory'
 import { BaseService, BaseServiceMixin, ServiceMixinHelper, BasicModel } from '../services'
-import { ValidationError } from 'apollo-server'
+import { UserInputError } from 'apollo-server'
 import { GraphQLResolveInfo } from 'graphql'
 
 export function withKnownBy<T extends ClassType> (NextMixinClass: T) {
@@ -103,7 +103,7 @@ export class KnownByServiceHelper extends ServiceMixinHelper {
   async presave (item: any) {
     if (!this.ctx.user) throw new UnauthenticatedError()
     if (!item.adventure) item.adventure = this.ctx.adventure
-    if (!item.adventure) throw new ValidationError('Cannot create new records when not logged in to an adventure.')
+    if (!item.adventure) throw new UserInputError('Cannot create new records when not logged in to an adventure.')
     if (!item.knownby) item.knownby = []
     if (this.ctx.character && item.knownby.every((charId: ObjectId) => !charId.equals(this.ctx.character!))) {
       item.knownby.push(this.ctx.character)
@@ -117,7 +117,7 @@ export class KnownByService<M extends BasicModel> extends BaseServiceMixin<M> {
     return this.service.getOneToMany(this.service.dlname + 'ByAdventureId', adventureId, graphqlfilter)
   }
 
-  async addKnownBy (ids: ObjectId[], characterIds: ObjectId[], skipAuth?: boolean) {
+  async addKnownBy (ids: ObjectId[]|undefined, characterIds: ObjectId[], skipAuth?: boolean) {
     if (!ids?.length || !characterIds?.length) return true
     const cleanCharacterIds = skipAuth ? (await this.service.ctx.characterService.getMany(characterIds)).map(c => c.id) : characterIds
     if (!cleanCharacterIds?.length) return true
