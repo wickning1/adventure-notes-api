@@ -22,38 +22,38 @@ query ($email: String!, $password: String!){
 }
 `
 
-async function createUser (name: string, email: string, password: string) {
-  const data = await gql.unauthenticated.request(CREATE_USER, { name, email, password })
+async function createUser (name: string, login: string) {
+  const data = await gql.unauthenticated.request(CREATE_USER, { name, email: `${login}@test.com`, password: `${login}rocks` })
   expect(data?.createUser?.id).to.not.be.an('undefined')
 }
 
-async function logIn (name: string) {
+async function logIn (login: string) {
   const { login: { token } } = await gql.unauthenticated.request(LOG_IN, {
-    email: `${name}@test.com`,
-    password: `${name}rocks`
+    email: `${login}@test.com`,
+    password: `${login}rocks`
   })
   expect(token).to.be.a('string')
-  gql.storeToken(name, token)
+  gql.storeToken(login, token)
 }
 
 describe('create users', () => {
   it('should create 10 users', async () => {
     await Promise.all([
       // First GM
-      createUser('AlphaDog', 'alpha@test.com', 'alpharocks'),
+      createUser('AlphaDog', 'alpha'),
       // Second GM, also a player in the first game
-      createUser('BetaMax', 'beta@test.com', 'betarocks'),
+      createUser('BetaMax', 'beta'),
       // Plays in both campaigns
-      createUser('Mike', 'mike@test.com', 'mikerocks'),
+      createUser('Mike', 'mike'),
       // Plays in first campaign
-      createUser('John', 'john@test.com', 'johnrocks'),
-      createUser('Jenn', 'jenn@test.com', 'jennrocks'),
-      createUser('Joe', 'joe@test.com', 'joerocks'),
+      createUser('John', 'john'),
+      createUser('Jenn', 'jenn'),
+      createUser('Joe', 'joe'),
       // Plays in second campaign
-      createUser('Nick', 'nick@test.com', 'nickrocks'),
-      createUser('Nancy', 'nancy@test.com', 'nancyrocks'),
-      createUser('Nicole', 'nicole@test.com', 'nicolerocks'),
-      createUser('Nate', 'nate@test.com', 'naterocks')
+      createUser('Nick', 'nick'),
+      createUser('Nancy', 'nancy'),
+      createUser('Nicole', 'nicole'),
+      createUser('Nate', 'nate')
     ])
   })
 
