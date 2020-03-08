@@ -64,7 +64,7 @@ export class UserResolver {
   }
 
   @FieldResolver(returns => [Character])
-  async characters (@Root() user: User, @Ctx() ctx: Context): Promise<Character[]> {
+  async characters (@Root() user: User, @Ctx() ctx: Context) {
     return ctx.characterService.getByPlayerId(user.id)
   }
 
@@ -91,6 +91,11 @@ export class UserResolver {
     return { token }
   }
 
+  @Query(returns => [Character], { description: 'Returns full set of characters the user may log in as, regardless of which adventure/character is logged in. For context-sensitive version of this query, use Query.characters(filter:{mayLoginAs:true})' })
+  async loginCharacters (@Root() user: User, @Ctx() ctx: Context) {
+    return ctx.getLoginCharacters()
+  }
+
   @Query(returns => JWT, {
     description: 'Log in as a specific character. Must already be logged in as a user.'
   })
@@ -98,7 +103,7 @@ export class UserResolver {
     @Ctx() ctx: Context,
     @Arg('character') characterId: ObjectId
   ) {
-    const characters = await ctx.characterService.mayLoginAs()
+    const characters = await ctx.getLoginCharacters()
     const character = characters.find(c => c.id.equals(characterId.toHexString()))
     if (!character) throw new NotAuthorizedError()
     const token = ctx.getToken({ user: ctx.user!, adventure: character.adventure, character: character.id })

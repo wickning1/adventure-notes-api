@@ -4,7 +4,7 @@ import lodash from 'lodash'
 import { ObjectId } from 'mongodb'
 import { UserService, AdventureService, CharacterService, ItemService, LocationService } from '../services'
 import { Character, Adventure } from '../models'
-import { FieldError } from './errors'
+import { FieldError, UnauthenticatedError } from './errors'
 
 export class Context {
   public adventure?: ObjectId
@@ -57,18 +57,34 @@ export class Context {
   }
 
   async getCharacter () {
+    if (!this.character) return undefined
     if (!this.cache.character) this.cache.character = (await CharacterService.find({ _id: this.character }))?.[0]
     return this.cache.character as Character | undefined
   }
 
   async getAdventure () {
+    if (!this.adventure) return undefined
     if (!this.cache.adventure) this.cache.adventure = (await AdventureService.find({ _id: this.adventure }))?.[0]
     return this.cache.adventure as Adventure | undefined
   }
 
   async getCharacters () {
+    if (!this.user) throw new UnauthenticatedError()
     if (!this.cache.characters) this.cache.characters = await CharacterService.find({ player: this.user })
     return this.cache.characters as Character[]
+  }
+
+  async getLoginCharacters () {
+    if (!this.user) throw new UnauthenticatedError()
+    if (!this.cache.logincharacters) {
+      const [myCharacters, myAdventures] = await Promise.all<Character[], Adventure[]>([
+        this.getCharacters(),
+        this.getGMAdventures()
+      ])
+      const moreCharacters = await CharacterService.find<Character>({ adventure: { $in: myAdventures.map(a => a.id) } })
+      this.cache.logincharacters = [...myCharacters, ...moreCharacters]
+    }
+    return this.cache.logincharacters as Character[]
   }
 
   async getGMAdventures () {

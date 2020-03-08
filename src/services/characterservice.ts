@@ -1,8 +1,8 @@
 import { DataLoaderFactory } from 'dataloader-factory'
 import { ObjectId } from 'mongodb'
-import { Character, CharacterFilters, Adventure, CharacterCreate, User, CharacterUpdate } from '../models'
-import { UnauthenticatedError, randomString } from '../lib'
-import { BaseService, AdventureService } from '.'
+import { Character, CharacterFilters, CharacterCreate, User, CharacterUpdate } from '../models'
+import { randomString } from '../lib'
+import { BaseService } from '.'
 import { KnownByServiceHelper, KnownByService, AlignmentServiceHelper, NameServiceHelper } from '../mixins'
 import { UserService } from './userservice'
 
@@ -24,7 +24,7 @@ export class CharacterService extends BaseService<Character> {
     const ret = await super.filters(filter)
 
     if (filter.mayLoginAs) {
-      const charIds = (await this.mayLoginAs(this.ctx.adventure)).map(c => c.id)
+      const charIds = (await this.ctx.getLoginCharacters()).map(c => c.id)
       ret.push({ _id: { $in: charIds } })
     }
 
@@ -32,17 +32,6 @@ export class CharacterService extends BaseService<Character> {
     else if (filter.isPlayerCharacter === false) ret.push({ player: null })
 
     return ret
-  }
-
-  async mayLoginAs (adventureId?: ObjectId) {
-    if (!this.ctx.user) throw new UnauthenticatedError()
-
-    const [myCharacters, myAdventures] = await Promise.all<Character[], Adventure[]>([
-      CharacterService.find({ player: this.ctx.user, ...(adventureId ? { adventure: adventureId } : {}) }),
-      AdventureService.find({ gamemaster: this.ctx.user, ...(adventureId ? { _id: adventureId } : {}) })
-    ])
-    const moreCharacters = await CharacterService.find<Character>({ adventure: { $in: myAdventures.map(a => a.id) } })
-    return [...myCharacters, ...moreCharacters]
   }
 
   async getByPlayerId (id: ObjectId, filters?: CharacterFilters) {

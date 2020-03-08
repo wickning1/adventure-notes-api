@@ -148,4 +148,12 @@ describe('create characters', () => {
     expect(both.characters).to.have.lengthOf(11)
     expect(second.characters).to.have.lengthOf(6)
   })
+  it('should list all the characters beta can log in as, no matter which token he uses', async () => {
+    const [{ loginCharacters: charsAsUser }, { loginCharacters: charsAsCharacter }] = await Promise.all([
+      gql.getClient('beta').request('{ loginCharacters { id, name } }'),
+      gql.getClient('Beta').request('{ loginCharacters { id, name } }')
+    ])
+    expect(charsAsUser.map((c:any) => c.name)).to.include.members(['Beta', 'Crux', 'Zicky']).and.does.not.include.members(['Aesop', 'Yola'])
+    expect(charsAsCharacter.map((c:any) => c.name)).to.include.members(['Beta', 'Crux', 'Zicky']).and.does.not.include.members(['Aesop', 'Yola'])
+  })
 })

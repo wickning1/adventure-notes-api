@@ -40,6 +40,9 @@ export class CharacterFilters extends withAlignmentFilter(KnownByFilterInput) {
 
   @Field(type => [ObjectIdScalar], { nullable: true })
   player?: ObjectId[]
+
+  @Field({ nullable: true })
+  mayLoginAs?: boolean
 }
 
 @Resolver(of => Character)

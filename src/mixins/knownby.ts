@@ -45,6 +45,8 @@ export class KnownByFilterInput extends BaseFilterInput {
 
   @Field(type => [ObjectIdScalar], { nullable: true })
   knownby?: ObjectId[]
+
+  ignoreKnownBy?: boolean
 }
 
 export class KnownByServiceHelper extends ServiceMixinHelper {
@@ -59,7 +61,7 @@ export class KnownByServiceHelper extends ServiceMixinHelper {
     await service.createIndex('adventure')
   }
 
-  static async authfilters (ctx: Context, graphqlfilter: any) {
+  static async authfilters (ctx: Context, graphqlfilter: KnownByFilterInput) {
     const authfilters: any[] = []
     if (ctx.adventure && ctx.character) {
       authfilters.push({ adventure: ctx.adventure })
