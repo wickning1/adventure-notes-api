@@ -126,7 +126,7 @@ describe('create characters', () => {
   })
   it('should not allow players to log in to the wrong character', async () => {
     const promise = gql.getClient('john').request(LOG_IN_AS_CHARACTER, { character: storage.charsByName.Artus.id })
-    expect(promise).to.be.rejected
+    await expect(promise).to.be.rejected
   })
   it('should be able to teach the PCs about each other', async () => {
     const { characters: charsCruxKnows } = await gql.getClient('Crux').request(GET_CHARACTERS)
